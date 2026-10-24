@@ -18,6 +18,18 @@ def parse_arguments():
     return parser.parse_args()
 
 
+def _resolve_task_names(names):
+    """按大小写不敏感方式把输入服务名匹配到注册表键, 返回 (匹配键列表, 未匹配输入列表)。"""
+    matched, unmatched = [], []
+    for one in names:
+        key = one.upper()
+        if key in checkin_map:
+            matched.append(key)
+        else:
+            unmatched.append(one)
+    return matched, unmatched
+
+
 def check_config(task_list):
     config_path = None
     config_path_list = []
@@ -68,51 +80,62 @@ def checkin():
     utc_time = (datetime.now(timezone.utc) + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
     print(f"当前时间: {utc_time}\n当前版本: {__version__}")
     args = parse_arguments()
-    include = args.include
-    exclude = args.exclude
-    if not include:
+    available_names = ", ".join(sorted(checkin_map.keys()))
+    if args.include:
+        include, unknown = _resolve_task_names(args.include)
+        if unknown:
+            print(f"警告: --include 中未找到服务: {', '.join(unknown)}")
+            print(f"可用服务: {available_names}")
+    else:
         include = list(checkin_map.keys())
+    if args.exclude:
+        exclude, unknown = _resolve_task_names(args.exclude)
+        if unknown:
+            print(f"警告: --exclude 中未找到服务: {', '.join(unknown)}")
+            print(f"可用服务: {available_names}")
     else:
-        include = [one for one in include if one in checkin_map.keys()]
-    if not exclude:
         exclude = []
-    else:
-        exclude = [one for one in exclude if one in checkin_map.keys()]
     task_list = list(set(include) - set(exclude))
-    notice_info, check_info = check_config(task_list)
-    if check_info:
-        task_name_str = "\n".join(
-            [f"「{checkin_map.get(one.upper())[0]}」账号数 : {len(value)}" for one, value in check_info.items()]
-        )
-        print(f"\n---------- 本次执行签到任务如下 ----------\n\n{task_name_str}\n\n")
-        content_list = []
-        for one_check, check_list in check_info.items():
-            check_name, check_func = checkin_map.get(one_check.upper())
-            print(f"----------开始执行「{check_name}」签到----------")
-            for index, check_item in enumerate(check_list):
-                try:
-                    msg = check_func(check_item).main()
-                    content_list.append(f"「{check_name}」\n{msg}")
-                    print(f"第 {index + 1} 个账号: ✅✅✅✅✅")
-                except Exception as e:
-                    content_list.append(f"「{check_name}」\n{e}")
-                    print(f"第 {index + 1} 个账号: ❌❌❌❌❌\n{e}")
-        print("\n\n")
-        try:
-            url = "https://pypi.org/pypi/dailycheckin/json"
-            latest_version = requests.get(url=url, timeout=30).json()["info"]["version"]
-        except Exception:
-            print("获取最新版本失败")
-            latest_version = "0.0.0"
-        content_list.append(
-            f"开始时间: {utc_time}\n"
-            f"任务用时: {int(time.time() - start_time)} 秒\n"
-            f"当前版本: {__version__}\n"
-            f"最新版本: {latest_version}\n"
-            f"项目地址: https://github.com/Sitoi/dailycheckin"
-        )
-        push_message(content_list=content_list, notice_info=notice_info)
+    if not task_list:
+        print("过滤后没有可执行的签到任务！")
+        print(f"可用服务: {available_names}")
         return
+    notice_info, check_info = check_config(task_list)
+    if not check_info:
+        print("没有可执行的签到任务！")
+        return
+    task_name_str = "\n".join(
+        [f"「{checkin_map.get(one.upper())[0]}」账号数 : {len(value)}" for one, value in check_info.items()]
+    )
+    print(f"\n---------- 本次执行签到任务如下 ----------\n\n{task_name_str}\n\n")
+    content_list = []
+    for one_check, check_list in check_info.items():
+        check_name, check_func = checkin_map.get(one_check.upper())
+        print(f"----------开始执行「{check_name}」签到----------")
+        for index, check_item in enumerate(check_list):
+            try:
+                msg = check_func(check_item).main()
+                content_list.append(f"「{check_name}」\n{msg}")
+                print(f"第 {index + 1} 个账号: ✅✅✅✅✅")
+            except Exception as e:
+                content_list.append(f"「{check_name}」\n{e}")
+                print(f"第 {index + 1} 个账号: ❌❌❌❌❌\n{e}")
+    print("\n\n")
+    try:
+        url = "https://pypi.org/pypi/dailycheckin/json"
+        latest_version = requests.get(url=url, timeout=30).json()["info"]["version"]
+    except Exception:
+        print("获取最新版本失败")
+        latest_version = "0.0.0"
+    content_list.append(
+        f"开始时间: {utc_time}\n"
+        f"任务用时: {int(time.time() - start_time)} 秒\n"
+        f"当前版本: {__version__}\n"
+        f"最新版本: {latest_version}\n"
+        f"项目地址: https://github.com/Sitoi/dailycheckin"
+    )
+    push_message(content_list=content_list, notice_info=notice_info)
+    return
 
 
 if __name__ == "__main__":
