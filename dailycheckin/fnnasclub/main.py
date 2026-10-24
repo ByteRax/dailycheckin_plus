@@ -9,12 +9,31 @@ from dailycheckin import CheckIn
 class FnNasClub(CheckIn):
     name = "飞牛Nas论坛"
 
+    # Refs: Sitoi/dailycheckin#589 登录墙/人机验证页特征：页面无打卡按钮时据此识别
+    LOGIN_WALL_MARKERS = (
+        "member.php?mod=logging",
+        "action=login",
+        "请登录",
+        "请先登录",
+        "登录后",
+        "captcha",
+        "滑块",
+        "人机验证",
+    )
+
     def __init__(self, check_item):
         self.check_item = check_item
 
-    @staticmethod
-    def get_sign_param_from_page(session):
-        """GET 签到页面并提取 sign"""
+    @classmethod
+    def _is_login_wall(cls, html):
+        """页面既无打卡按钮又带登录/人机验证标志时判定为登录墙或风控页。"""
+        if re.search(r'plugin\.php\?id=zqlj_sign&sign=[0-9a-fA-F]+" class="btna"', html):
+            return False
+        return any(marker in html for marker in cls.LOGIN_WALL_MARKERS)
+
+    @classmethod
+    def get_sign_param_from_page(cls, session):
+        """GET 签到页面并返回 (sign参数, 是否命中登录墙/人机验证页)"""
         response = session.get("https://club.fnnas.com/plugin.php?id=zqlj_sign", timeout=15)
         response.raise_for_status()
         try:
@@ -34,10 +53,12 @@ class FnNasClub(CheckIn):
                 # 匹配成功，取出sign参数
                 sign_param = match_signed.group(1)
 
-            return sign_param
+            if sign_param:
+                return sign_param, False
+            return "", cls._is_login_wall(html)
         except Exception as e:
             print(f"status_code: {response.status_code}, text: {response.text[:2000]}, exception: {e}")
-        return None
+        return None, False
 
     @staticmethod
     def sign(session, sign_param):
@@ -157,7 +178,11 @@ class FnNasClub(CheckIn):
                 "Cookie": cookie,
             }
         )
-        sign_param = self.get_sign_param_from_page(session=session)
+        sign_param, login_wall = self.get_sign_param_from_page(session=session)
+        if login_wall:
+            # Refs: Sitoi/dailycheckin#589 无凭据取证（2026-10-24）公开页仍含打卡按钮、页面未改版，
+            # 用户侧取参失败应为登录墙/滑块页，给出可行动文案而非泛化取参失败
+            return "签到结果: 疑似 Cookie 失效或触发人机验证，请重新抓取 Cookie 后重试"
         msg = self.sign(session=session, sign_param=sign_param)
         msg += self.get_info(session=session)
         msg = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg])
