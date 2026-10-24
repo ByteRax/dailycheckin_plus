@@ -15,7 +15,10 @@ class YouDao(CheckIn):
     @staticmethod
     def sign(cookies):
         ad_space = 0
-        refresh_cookies_res = requests.get("http://note.youdao.com/login/acc/pe/getsess?product=YNOTE", cookies=cookies)
+        # 携 YNOTE_SESS/YNOTE_PERS Cookie 刷新会话，必须走 https（Refs: 安全审查 A09 H-3）
+        refresh_cookies_res = requests.get(
+            "https://note.youdao.com/login/acc/pe/getsess?product=YNOTE", cookies=cookies
+        )
         cookies = dict(refresh_cookies_res.cookies)
         url = "https://note.youdao.com/yws/api/daupromotion?method=sync"
         res = requests.post(url=url, cookies=cookies)
