@@ -11,5 +11,7 @@
   "server": "Server 酱",
   "turbo": "Server 酱 Turbo",
   "ntfy": "Ntfy",
-  "gotify": "Gotify"
+  "gotify": "Gotify",
+  "wpush": "Wpush",
+  "xxtui": "Xxtui"
 }

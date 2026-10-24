@@ -19,6 +19,8 @@ import CardList from '../../components/CardList'
 
 ```json filename="config.json" copy
 {
+  "BARK_GROUP": "BARK 消息分组，例如: DailyCheckin",
+  "BARK_ICON": "BARK 推送图标 URL，例如: https://example.com/icon.png",
   "BARK_URL": "",
   "COOLPUSHEMAIL": true,
   "COOLPUSHQQ": true,
@@ -27,15 +29,25 @@ import CardList from '../../components/CardList'
   "DINGTALK_ACCESS_TOKEN": "",
   "DINGTALK_SECRET": "",
   "FSKEY": "",
+  "GOTIFY_URL": "",
+  "GOTIFY_TOKEN": "",
+  "GOTIFY_PRIORITY": "",
+  "NTFY_URL": "",
+  "NTFY_TOPIC": "",
+  "NTFY_PRIORITY": "",
   "PUSHPLUS_TOKEN": "",
   "PUSHPLUS_TOPIC": "",
+  "QMSG_BOT": "qmsg 机器人的 QQ 号，非必填，例如: 10000",
   "QMSG_KEY": "",
+  "QMSG_QQ": "指定接收消息的 QQ 号，多个用英文逗号分隔，非必填，例如: 10001,10002",
   "QMSG_TYPE": "",
+  "QMSG_URL": "qmsg 推送 API 地址，私有部署时填写，例如: https://qmsg.zendee.cn",
   "QYWX_AGENTID": "",
   "QYWX_CORPID": "",
   "QYWX_CORPSECRET": "",
   "QYWX_KEY": "",
   "QYWX_MEDIA_ID": "",
+  "QYWX_ORIGIN": "",
   "QYWX_TOUSER": "",
   "SCKEY": "",
   "SENDKEY": "",
@@ -43,6 +55,10 @@ import CardList from '../../components/CardList'
   "TG_BOT_TOKEN": "",
   "TG_PROXY": "",
   "TG_USER_ID": "",
+  "WPUSH_APIKEY": "",
+  "WPUSH_CHANNEL": "",
+  "WPUSH_TOPIC_CODE": "",
+  "XXTUI_KEY": "",
   "MERGE_PUSH": "",
   "ACFUN": [
     {
@@ -207,6 +223,32 @@ import CardList from '../../components/CardList'
 }
 ```
 
+## 新增与补齐的通知参数
+
+以下通知参数为本 fork 相对上游 README 模板新增或补齐的键（上游代码已支持但模板缺失的也已补上），含义如下：
+
+| 参数 | 说明 |
+| :--- | :--- |
+| _**BARK_GROUP**_ | bark 消息分组（可选，例如: `DailyCheckin`） |
+| _**BARK_ICON**_ | bark 推送图标 URL（可选） |
+| _**QMSG_URL**_ | qmsg 推送 API 地址，私有部署时填写，默认 `https://qmsg.zendee.cn` |
+| _**QMSG_QQ**_ | 指定接收消息的 QQ 号，多个用英文逗号分隔（可选） |
+| _**QMSG_BOT**_ | qmsg 机器人的 QQ 号（可选） |
+| _**GOTIFY_URL**_ / _**GOTIFY_TOKEN**_ / _**GOTIFY_PRIORITY**_ | gotify 服务地址 / 应用 token / 推送优先级 |
+| _**NTFY_URL**_ / _**NTFY_TOPIC**_ / _**NTFY_PRIORITY**_ | ntfy 服务地址 / 推送主题 / 推送优先级 |
+| _**QYWX_ORIGIN**_ | 企业微信应用反向代理地址，替换默认的 `https://qyapi.weixin.qq.com` |
+| _**WPUSH_APIKEY**_ | WPUSH 用户 API Key（wpush.cn） |
+| _**WPUSH_CHANNEL**_ | WPUSH 推送渠道，不填默认 `wechat` |
+| _**WPUSH_TOPIC_CODE**_ | WPUSH Topic 广播编码（可选） |
+| _**XXTUI_KEY**_ | xxtui 推送 Key（xxtui.com） |
+
+<Callout
+  type="warning"
+  emoji="⚠️"
+>
+  模板中 `BARK_GROUP`、`BARK_ICON`、`QMSG_QQ`、`QMSG_BOT`、`QMSG_URL` 等键的值为示例占位文本，不使用请清空为 `""`，避免占位文本被当作有效值发送。
+</Callout>
+
 ## 通知平台配置
 
 <Callout type="info">
@@ -274,6 +316,14 @@ import CardList from '../../components/CardList'
   <Card
     title="Gotify"
     href="/settings/notify/gotify"
+  />
+  <Card
+    title="Wpush"
+    href="/settings/notify/wpush"
+  />
+  <Card
+    title="Xxtui"
+    href="/settings/notify/xxtui"
   />
 </Cards>
 

@@ -49,7 +49,7 @@ import CardList from '../../components/CardList'
 |     _**IMAOTAI**_.lat      |          i 茅台 申领纬度（用于选择离你最近的茅台地点）          |
 |     _**IMAOTAI**_.lng      |          i 茅台 申领经度（用于选择离你最近的茅台地点）          |
 | _**IMAOTAI**_.reserve_rule | i 茅台 申领方式 默认：0 距离最近的店铺，1: 当前城市出货量最多的 |
-|  _**IMAOTAI**_.item_codes  |       i 茅台 申领商品 Code 默认不填为 ["10941", "10942"]        |
+|  _**IMAOTAI**_.item_codes  |       i 茅台 申领商品 Code，不填默认为 `["11318", "11319"]`        |
 
 > item_codes 支持以下几种选择
 
@@ -64,6 +64,36 @@ import CardList from '../../components/CardList'
 ```
 
 默认配置申购 `["11318", "11319"]`
+
+### 获取 item_codes
+
+可申购商品会不定期调整，可通过 i 茅台门店资源接口（脚本内部的 `get_map` 接口同款）列出当前所有门店在售商品及其 code：
+
+```bash copy
+# 第一步：获取门店列表地址（返回 JSON 中 data.mtshops_pc.url 即门店列表文件地址）
+curl -s https://static.moutai519.com.cn/mt-backend/xhr/front/mall/resource/get \
+  -H 'User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 15_0_1 like Mac OS X)'
+
+# 第二步：拉取门店列表，items 数组中的 itemId / title 即商品 code 与名称
+curl -s '<第一步返回的 mtshops_pc.url>'
+```
+
+门店列表条目示例（截取）：
+
+```json
+{
+  "shopId": "xxxxxx",
+  "items": [
+    {
+      "itemId": "11318",
+      "title": "53%vol 500ml贵州茅台酒（乙巳蛇年）",
+      "inventory": 0
+    }
+  ]
+}
+```
+
+> 不同门店返回的 `items` 汇总后即为当前全部可申购商品，把想申购的 `itemId` 填入 `item_codes` 即可。
 
 ## 获取方式
 
