@@ -270,6 +270,31 @@ def message2xxtui(xxtui_key, content):
     requests.post(url=f"https://www.xxtui.com/xxtui/{xxtui_key}", json=data, timeout=10)
 
 
+def message2webhook(webhook_url: str, content: str, webhook_method: str = None, webhook_body: str = None) -> None:
+    print("自定义 Webhook 推送开始")
+    title = "签到通知"
+    method = (webhook_method or "POST").upper()
+    if method == "GET":
+        response = requests.get(url=webhook_url, params={"title": title, "content": content}, timeout=10)
+    else:
+        template = webhook_body or '{"title":"{title}","content":"{content}"}'
+        try:
+            # 占位符按 JSON 字符串字面量转义后替换，content 含引号/换行时仍产出合法 JSON
+            rendered = (
+                template.replace("{title}", json.dumps(title, ensure_ascii=False)[1:-1])
+                .replace("{content}", json.dumps(content, ensure_ascii=False)[1:-1])
+            )
+            body = json.loads(rendered)
+        except Exception as e:
+            print(f"自定义 Webhook 推送失败！webhook_body 模板解析失败：{e}")
+            return
+        response = requests.post(url=webhook_url, json=body, timeout=10)
+    if 200 <= response.status_code < 300:
+        print("自定义 Webhook 推送成功！")
+    else:
+        print(f"自定义 Webhook 推送失败！HTTP {response.status_code}")
+
+
 def important_notice():
     # fork 版：重要通知改为读取本 fork 仓库带「通知」标签的开放 issue（原实现指向上游仓库）
     datas = requests.get(
@@ -328,6 +353,9 @@ def push_message(content_list: list, notice_info: dict):
     ntfy_topic = notice_info.get("ntfy_topic")
     ntfy_priority = notice_info.get("ntfy_priority")
     xxtui_key = notice_info.get("xxtui_key")
+    webhook_url = notice_info.get("webhook_url")
+    webhook_method = notice_info.get("webhook_method")
+    webhook_body = notice_info.get("webhook_body")
     content_str = "\n————————————\n\n".join(content_list)
     merge_push = notice_info.get("merge_push")
     message_list = [content_str]
@@ -350,6 +378,7 @@ def push_message(content_list: list, notice_info: dict):
             or wpush_apikey
             or ntfy_topic
             or xxtui_key
+            or webhook_url
             or (gotify_url and gotify_token)
         ):
             merge_push = False
@@ -486,6 +515,16 @@ def push_message(content_list: list, notice_info: dict):
                 )
             except Exception as e:
                 print("Xxtui 推送失败", str(e).replace(xxtui_key, "***"))
+        if webhook_url:
+            try:
+                message2webhook(
+                    webhook_url=webhook_url,
+                    content=message,
+                    webhook_method=webhook_method,
+                    webhook_body=webhook_body,
+                )
+            except Exception as e:
+                print("Webhook 推送失败", e)
 
 
 if __name__ == "__main__":

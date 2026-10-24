@@ -57,6 +57,9 @@ notice_map = {
     "NTFY_TOPIC": "",
     "NTFY_PRIORITY": "",
     "XXTUI_KEY": "",
+    "WEBHOOK_URL": "",
+    "WEBHOOK_METHOD": "",
+    "WEBHOOK_BODY": "",
 }
 
 
