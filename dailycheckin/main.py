@@ -30,6 +30,13 @@ def _resolve_task_names(names):
     return matched, unmatched
 
 
+def _format_account_result(check_name, msg):
+    """生成单账号结果的通知文案与成功标记; main() 返回 None 视为签到失败。"""
+    if msg is None:
+        return f"「{check_name}」\n签到失败（无返回结果）", False
+    return f"「{check_name}」\n{msg}", True
+
+
 def check_config(task_list):
     config_path = None
     config_path_list = []
@@ -115,8 +122,12 @@ def checkin():
         for index, check_item in enumerate(check_list):
             try:
                 msg = check_func(check_item).main()
-                content_list.append(f"「{check_name}」\n{msg}")
-                print(f"第 {index + 1} 个账号: ✅✅✅✅✅")
+                text, success = _format_account_result(check_name, msg)
+                content_list.append(text)
+                if success:
+                    print(f"第 {index + 1} 个账号: ✅✅✅✅✅")
+                else:
+                    print(f"第 {index + 1} 个账号: ❌❌❌❌❌\n{text.splitlines()[-1]}")
             except Exception as e:
                 content_list.append(f"「{check_name}」\n{e}")
                 print(f"第 {index + 1} 个账号: ❌❌❌❌❌\n{e}")
