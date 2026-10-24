@@ -140,8 +140,10 @@ def message2dingtalk(dingtalk_secret, dingtalk_access_token, content):
     )
 
 
-def message2bark(bark_url: str, content, bark_group=None, bark_icon=None):
-    print("Bark 推送开始")
+BARK_URL_MAX_LENGTH = 2000  # bark GET URL 过长会被服务端/网关拒绝：超限时按行切分分批发送
+
+
+def _bark_build_url(bark_url, content, bark_group, bark_icon, bark_sound):
     parts = urlsplit(bark_url)
     path = parts.path if parts.path.endswith("/") else parts.path + "/"
     query = dict(parse_qsl(parts.query))
@@ -149,9 +151,70 @@ def message2bark(bark_url: str, content, bark_group=None, bark_icon=None):
         query["group"] = bark_group
     if bark_icon:
         query["icon"] = bark_icon
-    url = urlunsplit((parts.scheme, parts.netloc, path + quote_plus(content), urlencode(query), parts.fragment))
+    if bark_sound:
+        query["sound"] = bark_sound
+    return urlunsplit((parts.scheme, parts.netloc, path + quote_plus(content), urlencode(query), parts.fragment))
+
+
+def _bark_split_chunks(bark_url, content, bark_group, bark_icon, bark_sound, limit=BARK_URL_MAX_LENGTH):
+    def build(text):
+        return _bark_build_url(bark_url, text, bark_group, bark_icon, bark_sound)
+
+    if len(build("")) >= limit:
+        # bark_url 本身已超限（如 query 过长），无从切分，维持单条发送
+        return [content]
+    chunks = []
+    current = ""
+    for line in content.splitlines():
+        candidate = line if not current else f"{current}\n{line}"
+        if current and len(build(candidate)) > limit:
+            chunks.append(current)
+            current = ""
+            candidate = line
+        # 单行自身超限时按可容纳的最大前缀硬切（二分），不丢字符
+        while len(build(candidate)) > limit and len(candidate) > 1:
+            lo, hi = 1, len(candidate) - 1
+            while lo < hi:
+                mid = (lo + hi + 1) // 2
+                if len(build(candidate[:mid])) <= limit:
+                    lo = mid
+                else:
+                    hi = mid - 1
+            chunks.append(candidate[:lo])
+            candidate = candidate[lo:]
+        current = candidate
+    if current:
+        chunks.append(current)
+    return chunks or [content]
+
+
+def message2bark(bark_url: str, content, bark_group=None, bark_icon=None, bark_sound=None):
+    print("Bark 推送开始")
+    chunks = _bark_split_chunks(bark_url, content, bark_group, bark_icon, bark_sound)
+    total = len(chunks)
+    if total > 1:
+        print(f"Bark 内容超长，拆分为 {total} 条推送")
     headers = {"Content-type": "application/x-www-form-urlencoded"}
-    requests.get(url=url, headers=headers, timeout=10)
+    ok_count = 0
+    for index, chunk in enumerate(chunks):
+        if index:
+            time.sleep(1)  # 分批连发易触发限流，间隔 1s
+        try:
+            response = requests.get(
+                url=_bark_build_url(bark_url, chunk, bark_group, bark_icon, bark_sound),
+                headers=headers,
+                timeout=10,
+            )
+        except Exception as e:
+            print(f"Bark 推送失败（{index + 1}/{total}）", e)
+            continue
+        if 200 <= response.status_code < 300:
+            ok_count += 1
+            print(f"Bark 推送成功！（{index + 1}/{total}）")
+        else:
+            print(f"Bark 推送失败！HTTP {response.status_code}（{index + 1}/{total}）")
+    if ok_count == 0:
+        print("Bark 全部推送失败！")
 
 
 def message2qywxrobot(qywx_key, content):
@@ -471,6 +534,7 @@ def push_message(content_list: list, notice_info: dict):
     bark_url = notice_info.get("bark_url")
     bark_group = notice_info.get("bark_group")
     bark_icon = notice_info.get("bark_icon")
+    bark_sound = notice_info.get("bark_sound")
     sckey = notice_info.get("sckey")
     sendkey = notice_info.get("sendkey")
     qmsg_key = notice_info.get("qmsg_key")
@@ -595,7 +659,13 @@ def push_message(content_list: list, notice_info: dict):
                 print("企业微信应用消息推送失败", e)
         if bark_url:
             try:
-                message2bark(bark_url=bark_url, content=message, bark_group=bark_group, bark_icon=bark_icon)
+                message2bark(
+                    bark_url=bark_url,
+                    content=message,
+                    bark_group=bark_group,
+                    bark_icon=bark_icon,
+                    bark_sound=bark_sound,
+                )
             except Exception as e:
                 print("Bark 推送失败", e)
         if dingtalk_access_token and dingtalk_secret:

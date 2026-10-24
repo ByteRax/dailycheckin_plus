@@ -2,7 +2,9 @@
 
 覆盖:
 - Server酱³(sctp 前缀 sendkey -> uid.push.ft07.com)与 Turbo 双格式路由(Sitoi/dailycheckin#517);
-- Server 酱成败按响应 body code/errno 判定(失败打日志不抛异常).
+- Server 酱成败按响应 body code/errno 判定(失败打日志不抛异常);
+- bark sound 参数与超长内容分批发送(Sitoi/dailycheckin#320 剩余部分 #387 #523,
+  Original idea by LastNever from Sitoi/dailycheckin#320 (reimplemented)).
 """
 
 from urllib.parse import unquote_plus
@@ -160,3 +162,106 @@ def test_merge_push_default_split_when_only_sckey(monkeypatch, fake_http):
     urls = [call["url"] for call in fake_http.calls]
     assert len(urls) == 2
     assert all(url.startswith("https://sc.ftqq.com/") for url in urls)
+
+
+# ---------------------------------------------------------------------------
+# bark：sound 参数与超长内容分批（Sitoi/dailycheckin#320 剩余部分 #387 #523；
+# Original idea by LastNever from Sitoi/dailycheckin#320 (reimplemented)）
+# ---------------------------------------------------------------------------
+
+
+def test_bark_sound_query_param(fake_http):
+    message.message2bark(
+        "https://api.day.app/KEY",
+        "签到",
+        bark_group="daily",
+        bark_icon="https://example.com/i.png",
+        bark_sound="minuet",
+    )
+    (call,) = fake_http.calls
+    assert call["method"] == "GET"
+    assert (
+        call["url"] == "https://api.day.app/KEY/%E7%AD%BE%E5%88%B0"
+        "?group=daily&icon=https%3A%2F%2Fexample.com%2Fi.png&sound=minuet"
+    )
+    assert call["timeout"] == 10
+
+
+def test_bark_push_message_passes_sound(monkeypatch):
+    monkeypatch.setattr(message, "important_notice", lambda: None)
+    sent = []
+    monkeypatch.setattr(message, "message2bark", lambda **kw: sent.append(kw))
+    message.push_message(["a"], {"bark_url": "u", "bark_sound": "alarm"})
+    assert sent == [{"bark_url": "u", "content": "a", "bark_group": None, "bark_icon": None, "bark_sound": "alarm"}]
+
+
+def test_bark_short_content_single_request_no_sleep(fake_http, sleep_recorder):
+    message.message2bark("https://api.day.app/KEY", "短消息", bark_sound="minuet")
+    assert len(fake_http.calls) == 1
+    assert sleep_recorder == []
+
+
+def test_bark_long_content_split_by_lines(fake_http, sleep_recorder):
+    lines = [f"第{i:03d}行 签到结果内容{i}" for i in range(1, 121)]
+    content = "\n".join(lines)
+    message.message2bark(
+        "https://api.day.app/KEY",
+        content,
+        bark_group="daily",
+        bark_icon="https://example.com/i.png",
+        bark_sound="minuet",
+    )
+    assert len(fake_http.calls) > 1
+    for call in fake_http.calls:
+        assert len(call["url"]) <= 2000, f"URL 超长: {len(call['url'])}"
+        # 每条分批都带相同的 group/icon/sound
+        assert "group=daily" in call["url"]
+        assert "icon=" in call["url"]
+        assert "sound=minuet" in call["url"]
+    # 分批之间间隔 1s（最后一条后不再 sleep）
+    assert sleep_recorder == [1] * (len(fake_http.calls) - 1)
+    # 内容不丢：首行与末行分别出现在第一条与最后一条 URL 中
+    assert unquote_plus(fake_http.calls[0]["url"].rsplit("/", 1)[1].split("?")[0]).startswith("第001行")
+    assert unquote_plus(fake_http.calls[-1]["url"].rsplit("/", 1)[1].split("?")[0]).split("\n")[-1] == lines[-1]
+
+
+def test_bark_single_oversize_line_hard_split(fake_http, sleep_recorder):
+    content = "长" * 4000  # 无换行：触发单行二分硬切
+    message.message2bark("https://api.day.app/KEY", content)
+    assert len(fake_http.calls) > 1
+    for call in fake_http.calls:
+        assert len(call["url"]) <= 2000
+    assert sleep_recorder == [1] * (len(fake_http.calls) - 1)
+    # 硬切不丢字符：解码后的各段拼接还原原文
+    chunks = [unquote_plus(call["url"].rsplit("/", 1)[1].split("?")[0]) for call in fake_http.calls]
+    assert "".join(chunks) == content
+
+
+def test_bark_batch_partial_failure_visible_no_raise(monkeypatch, capsys, sleep_recorder):
+    calls = []
+
+    def fake_get(url, **kwargs):
+        calls.append(url)
+        # 第 1 条失败（HTTP 400），第 2 条成功：失败可见、不抛异常、后续条继续发送
+        status = 400 if len(calls) == 1 else 200
+        return FakeResponse(status_code=status, json_data={"code": status})
+
+    monkeypatch.setattr(message.requests, "get", fake_get)
+    lines = [f"第{i:03d}行 签到结果内容{i}" for i in range(1, 121)]
+    message.message2bark("https://api.day.app/KEY", "\n".join(lines), bark_sound="minuet")
+    assert len(calls) > 1
+    out = capsys.readouterr().out
+    assert "推送失败" in out
+    assert "推送成功" in out
+
+
+def test_bark_single_request_http_error_is_failure(monkeypatch, capsys):
+    monkeypatch.setattr(
+        message.requests,
+        "get",
+        lambda url, **kwargs: FakeResponse(status_code=401, json_data={"code": 401}),
+    )
+    message.message2bark("https://api.day.app/KEY", "hello")
+    out = capsys.readouterr().out
+    assert "推送失败" in out
+    assert "推送成功" not in out

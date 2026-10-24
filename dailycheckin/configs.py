@@ -19,6 +19,7 @@ notice_map = {
     "BARK_URL": "",
     "BARK_GROUP": "",
     "BARK_ICON": "",
+    "BARK_SOUND": "",
     "COOLPUSHEMAIL": "",
     "COOLPUSHQQ": "",
     "COOLPUSHSKEY": "",

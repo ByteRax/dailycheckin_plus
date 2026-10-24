@@ -260,7 +260,7 @@ def test_push_message_passes_bark_options(monkeypatch):
     sent = []
     monkeypatch.setattr(message, "message2bark", lambda **kw: sent.append(kw))
     message.push_message(["a"], {"bark_url": "u", "bark_group": "g", "bark_icon": "i"})
-    assert sent == [{"bark_url": "u", "content": "a", "bark_group": "g", "bark_icon": "i"}]
+    assert sent == [{"bark_url": "u", "content": "a", "bark_group": "g", "bark_icon": "i", "bark_sound": None}]
 
 
 def test_wpush_code_false_is_failure(monkeypatch, capsys):
