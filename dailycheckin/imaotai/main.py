@@ -210,8 +210,13 @@ userId: 2
         day_time = int(time.mktime(datetime.date.today().timetuple())) * 1000
         session_id = self.headers["current_session_id"]
         responses = requests.get(
-            f"https://static.moutai519.com.cn/mt-backend/xhr/front/mall/shop/list/slim/v3/{session_id}/{province}/{item_code}/{day_time}"
+            f"https://static.moutai519.com.cn/mt-backend/xhr/front/mall/shop/list/slim/v3/{session_id}/{province}/{item_code}/{day_time}",
+            timeout=10,
         )
+        # Refs: Sitoi/dailycheckin#563 #568 v3 对象存储路径已被上游删除（404 + NoSuchKey），
+        # 疑似升级 v4；明确报错等待适配，不编造 v4 接口、不做无限重试
+        if responses.status_code == 404 or "NoSuchKey" in responses.text:
+            raise Exception("门店列表接口已失效（疑似上游升级 v4），等待适配")
         if responses.status_code != 200:
             print(
                 f"get_location_count : params : {day_time}, response code : {responses.status_code}, response body : {responses.text}"
