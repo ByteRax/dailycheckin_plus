@@ -323,3 +323,42 @@ def test_push_message_dispatches_smtp_with_merge_split(monkeypatch, fake_smtp):
     assert len(sent_bodies) == 2
     payloads = sorted(parse_sent_mail(body)["payload"] for body in sent_bodies)
     assert payloads == ["a", "b"]
+
+
+# ---------------------------------------------------------------------------
+# PushDeer（Sitoi/dailycheckin#558；重实现自 PR #366，未复用其代码）
+# ---------------------------------------------------------------------------
+
+
+def test_pushdeer_payload_text_desp(fake_http, capsys):
+    message.message2pushdeer("pd-pushkey-1", "签到结果内容")
+    (call,) = fake_http.calls
+    assert call["method"] == "POST"
+    assert call["url"] == "https://api2.pushdeer.com/message/push"
+    assert call["data"] == {"pushkey": "pd-pushkey-1", "text": "签到通知", "desp": "签到结果内容"}
+    assert call["timeout"] == 10
+    assert "PushDeer 推送成功" in capsys.readouterr().out
+
+
+def test_pushdeer_body_code_nonzero_is_failure(fake_http, capsys):
+    # PushDeer 错误以 body 内 code 返回（如 9201 pushkey 无效），不能只看 HTTP 状态码
+    fake_http.response = FakeResponse(status_code=200, json_data={"code": 9201, "error": "pushkey 不合法"})
+    message.message2pushdeer("bad-key", "hello")
+    out = capsys.readouterr().out
+    assert "PushDeer 推送失败" in out
+    assert "PushDeer 推送成功" not in out
+
+
+def test_pushdeer_non_json_body_reports_failure(fake_http, capsys):
+    fake_http.response = FakeResponse(status_code=502, json_data=None, text="<html>Bad Gateway</html>")
+    message.message2pushdeer("pd-pushkey-1", "hello")
+    assert "PushDeer 推送失败" in capsys.readouterr().out
+
+
+def test_push_message_dispatches_pushdeer_with_merge_split(monkeypatch):
+    monkeypatch.setattr(message, "important_notice", lambda: None)
+    sent = []
+    monkeypatch.setattr(message, "message2pushdeer", lambda **kw: sent.append(kw))
+    # 仅配置 pushdeer 时 merge_push 默认拆分（pushdeer_pushkey 在默认集合中），两条内容各推一次
+    message.push_message(["a", "b"], {"pushdeer_pushkey": "k"})
+    assert sent == [{"pushdeer_pushkey": "k", "content": "a"}, {"pushdeer_pushkey": "k", "content": "b"}]

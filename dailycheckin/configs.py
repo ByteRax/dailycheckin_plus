@@ -68,6 +68,7 @@ notice_map = {
     "SMTP_USER": "",
     "SMTP_PASSWORD": "",
     "SMTP_TO": "",
+    "PUSHDEER_PUSHKEY": "",
 }
 
 
