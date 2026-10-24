@@ -465,7 +465,7 @@ def test_webhook_and_pushme_failure_logs_mask_credentials(monkeypatch, capsys):
     key = "secret-pushme-key"
 
     def raise_url(*a, **kw):
-        raise Exception(f"HTTPSConnectionPool(host='hook.example.com'): url: /x?token=secret-token-42")
+        raise Exception("HTTPSConnectionPool(host='hook.example.com'): url: /x?token=secret-token-42")
 
     def raise_key(*a, **kw):
         raise Exception(f"HTTPSConnectionPool(host='push.i-i.me'): url: /{key}")
