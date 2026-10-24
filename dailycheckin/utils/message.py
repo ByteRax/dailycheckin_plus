@@ -12,7 +12,7 @@ import requests
 def message2server(sckey, content):
     print("server 酱推送开始")
     data = {"text": "每日签到", "desp": content.replace("\n", "\n\n")}
-    requests.post(url=f"https://sc.ftqq.com/{sckey}.send", data=data)
+    requests.post(url=f"https://sc.ftqq.com/{sckey}.send", data=data, timeout=10)
 
 
 def message2server_turbo(sendkey, content):
@@ -24,7 +24,7 @@ def message2server_turbo(sendkey, content):
     else:
         print("server 酱 Turbo 推送开始")
         url = f"https://sctapi.ftqq.com/{sendkey}.send"
-    requests.post(url=url, data=data)
+    requests.post(url=url, data=data, timeout=10)
 
 
 def message2coolpush(
@@ -37,20 +37,20 @@ def message2coolpush(
     print("Cool Push 推送开始")
     params = {"c": content, "t": "每日签到"}
     if coolpushqq:
-        requests.post(url=f"https://push.xuthus.cc/send/{coolpushskey}", params=params)
+        requests.post(url=f"https://push.xuthus.cc/send/{coolpushskey}", params=params, timeout=10)
     if coolpushwx:
-        requests.post(url=f"https://push.xuthus.cc/wx/{coolpushskey}", params=params)
+        requests.post(url=f"https://push.xuthus.cc/wx/{coolpushskey}", params=params, timeout=10)
     if coolpushemail:
-        requests.post(url=f"https://push.xuthus.cc/email/{coolpushskey}", params=params)
+        requests.post(url=f"https://push.xuthus.cc/email/{coolpushskey}", params=params, timeout=10)
 
 
 def message2qmsg(qmsg_key, qmsg_type, content):
     print("qmsg 酱推送开始")
     params = {"msg": content}
     if qmsg_type == "group":
-        requests.get(url=f"https://qmsg.zendee.cn/group/{qmsg_key}", params=params)
+        requests.get(url=f"https://qmsg.zendee.cn/group/{qmsg_key}", params=params, timeout=10)
     else:
-        requests.get(url=f"https://qmsg.zendee.cn/send/{qmsg_key}", params=params)
+        requests.get(url=f"https://qmsg.zendee.cn/send/{qmsg_key}", params=params, timeout=10)
 
 
 def message2telegram(tg_api_host, tg_proxy, tg_bot_token, tg_user_id, content):
@@ -71,13 +71,13 @@ def message2telegram(tg_api_host, tg_proxy, tg_bot_token, tg_user_id, content):
         }
     else:
         proxies = None
-    requests.post(url=url, data=send_data, proxies=proxies)
+    requests.post(url=url, data=send_data, proxies=proxies, timeout=10)
 
 
 def message2feishu(fskey, content):
     print("飞书 推送开始")
     data = {"msg_type": "text", "content": {"text": content}}
-    requests.post(url=f"https://open.feishu.cn/open-apis/bot/v2/hook/{fskey}", json=data)
+    requests.post(url=f"https://open.feishu.cn/open-apis/bot/v2/hook/{fskey}", json=data, timeout=10)
 
 
 def message2dingtalk(dingtalk_secret, dingtalk_access_token, content):
@@ -93,6 +93,7 @@ def message2dingtalk(dingtalk_secret, dingtalk_access_token, content):
         url=f"https://oapi.dingtalk.com/robot/send?access_token={dingtalk_access_token}&timestamp={timestamp}&sign={sign}",
         headers={"Content-Type": "application/json", "Charset": "UTF-8"},
         data=json.dumps(send_data),
+        timeout=10,
     )
 
 
@@ -103,7 +104,7 @@ def message2bark(bark_url: str, content):
     content = quote_plus(content)
     url = f"{bark_url}{content}"
     headers = {"Content-type": "application/x-www-form-urlencoded"}
-    requests.get(url=url, headers=headers)
+    requests.get(url=url, headers=headers, timeout=10)
 
 
 def message2qywxrobot(qywx_key, content):
@@ -111,6 +112,7 @@ def message2qywxrobot(qywx_key, content):
     requests.post(
         url=f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={qywx_key}",
         data=json.dumps({"msgtype": "text", "text": {"content": content}}),
+        timeout=10,
     )
 
 
@@ -127,7 +129,7 @@ def message2qywxapp(
     base_url = "https://qyapi.weixin.qq.com"
     if qywx_origin:
         base_url = qywx_origin
-    res = requests.get(f"{base_url}/cgi-bin/gettoken?corpid={qywx_corpid}&corpsecret={qywx_corpsecret}")
+    res = requests.get(f"{base_url}/cgi-bin/gettoken?corpid={qywx_corpid}&corpsecret={qywx_corpsecret}", timeout=10)
     token = res.json().get("access_token", False)
     if qywx_media_id:
         data = {
@@ -162,6 +164,7 @@ def message2qywxapp(
     requests.post(
         url=f"{base_url}/cgi-bin/message/send?access_token={token}",
         data=json.dumps(data),
+        timeout=10,
     )
 
 
@@ -175,7 +178,7 @@ def message2pushplus(pushplus_token, content, pushplus_topic=None):
     }
     if pushplus_topic:
         data["topic"] = pushplus_topic
-    requests.post(url="http://www.pushplus.plus/send", data=json.dumps(data))
+    requests.post(url="http://www.pushplus.plus/send", data=json.dumps(data), timeout=10)
 
 
 def message2gotify(gotify_url: str, gotify_token: str, gotify_priority: str, content: str) -> None:
@@ -188,7 +191,7 @@ def message2gotify(gotify_url: str, gotify_token: str, gotify_priority: str, con
         "message": content,
         "priority": gotify_priority,
     }
-    response = requests.post(url, data=data).json()
+    response = requests.post(url, data=data, timeout=10).json()
 
     if response.get("id"):
         print("Gotify 推送成功！")
@@ -214,7 +217,7 @@ def message2ntfy(ntfy_url: str, ntfy_topic: str, ntfy_priority: str, content: st
     data = content.encode(encoding="utf-8")
     headers = {"Title": encoded_title, "Priority": ntfy_priority}  # 使用编码后的 title
     url = f"{ntfy_url}/{ntfy_topic}"
-    response = requests.post(url, data=data, headers=headers)
+    response = requests.post(url, data=data, headers=headers, timeout=10)
     if response.status_code == 200:  # 使用 response.status_code 进行检查
         print("Ntfy 推送成功！")
     else:
@@ -222,7 +225,9 @@ def message2ntfy(ntfy_url: str, ntfy_topic: str, ntfy_priority: str, content: st
 
 
 def important_notice():
-    datas = requests.get(url="https://api.github.com/repos/Sitoi/dailycheckin/issues?state=open&labels=通知").json()
+    datas = requests.get(
+        url="https://api.github.com/repos/Sitoi/dailycheckin/issues?state=open&labels=通知", timeout=10
+    ).json()
     if datas:
         data = datas[0]
         title = data.get("title")
