@@ -612,8 +612,6 @@ def push_message(content_list: list, notice_info: dict):
             or pushdeer_pushkey
             or wxpusher_apptoken
             or (gotify_url and gotify_token)
-            or sckey
-            or sendkey
         ):
             merge_push = False
         else:

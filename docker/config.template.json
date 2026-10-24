@@ -1,6 +1,7 @@
 {
     "BARK_GROUP": "BARK 消息分组，例如: DailyCheckin",
     "BARK_ICON": "BARK 推送图标 URL，例如: https://example.com/icon.png",
+    "BARK_SOUND": "",
     "BARK_URL": "",
     "COOLPUSHEMAIL": true,
     "COOLPUSHQQ": true,

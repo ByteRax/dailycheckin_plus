@@ -148,20 +148,22 @@ def test_sckey_legacy_scu_key_keeps_old_endpoint(fake_http):
     assert call["data"]["desp"] == "hello"
 
 
-def test_merge_push_default_split_when_only_sendkey(monkeypatch, fake_http):
+def test_merge_push_default_merged_when_only_sendkey(monkeypatch, fake_http):
+    # Server酱默认保持上游行为：合并为 1 条/次（Turbo 免费额度 5 条/天，拆分会造成额度回归）；
+    # 需要逐条推送的用户可显式配置 MERGE_PUSH: false
     monkeypatch.setattr(message, "important_notice", lambda: None)
     message.push_message(["a", "b"], {"sendkey": "SCT9876TURBOKEY"})
     urls = [call["url"] for call in fake_http.calls]
-    assert len(urls) == 2
-    assert all(url.startswith("https://sctapi.ftqq.com/") for url in urls)
+    assert len(urls) == 1
+    assert urls[0].startswith("https://sctapi.ftqq.com/")
 
 
-def test_merge_push_default_split_when_only_sckey(monkeypatch, fake_http):
+def test_merge_push_default_merged_when_only_sckey(monkeypatch, fake_http):
     monkeypatch.setattr(message, "important_notice", lambda: None)
     message.push_message(["a", "b"], {"sckey": "SCU123OLDKEY"})
     urls = [call["url"] for call in fake_http.calls]
-    assert len(urls) == 2
-    assert all(url.startswith("https://sc.ftqq.com/") for url in urls)
+    assert len(urls) == 1
+    assert urls[0].startswith("https://sc.ftqq.com/")
 
 
 # ---------------------------------------------------------------------------
