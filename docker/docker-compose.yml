@@ -1,7 +1,7 @@
 version: '3'
 services:
   dailycheckin:
-    image: sitoi/dailycheckin:latest
+    image: ghcr.io/byterax/dailycheckin_plus:latest
     container_name: dailycheckin
     restart: always
     tty: true

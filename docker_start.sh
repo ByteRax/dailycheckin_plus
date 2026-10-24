@@ -9,14 +9,14 @@ CRONTAB_FILE="cron/crontab_list.sh"
 
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "config.json 不存在. 开始下载默认文件..."
-    curl https://fastly.jsdelivr.net/gh/sitoi/dailycheckin@main/docker/config.template.json -o $CONFIG_FILE
+    curl https://raw.githubusercontent.com/ByteRax/dailycheckin_plus/main/docker/config.template.json -o $CONFIG_FILE
 else
     echo "config.json 已存在. 跳过下载。"
 fi
 
 if [ ! -f "$CRONTAB_FILE" ]; then
     echo "crontab_list.sh 不存在. 开始下载默认文件..."
-    curl https://fastly.jsdelivr.net/gh/sitoi/dailycheckin@main/docker/crontab_list.sh -o $CRONTAB_FILE
+    curl https://raw.githubusercontent.com/ByteRax/dailycheckin_plus/main/docker/crontab_list.sh -o $CRONTAB_FILE
 else
     echo "crontab_list.sh 已存在. 跳过下载。"
 fi
@@ -31,17 +31,17 @@ else
   if [ $? -ne 0 ];then
     echo "未安装 docker-compose，将使用 docker 命令启动容器..."
     echo "开始通过 docker 命令创建容器"
-    docker pull sitoi/dailycheckin:latest
+    docker pull ghcr.io/byterax/dailycheckin_plus:latest
     docker run -d -v $(pwd)/config:/dailycheckin/config \
       -v $(pwd)/logs:/dailycheckin/logs \
       -v $(pwd)/cron:/dailycheckin/cron \
       --name dailycheckin \
       --restart always \
-      sitoi/dailycheckin:latest
+      ghcr.io/byterax/dailycheckin_plus:latest
   else
     echo "docker-compose 环境存在，将使用 docker-compose 命令启动容器..."
     echo "下载 docker-compose.yml 文件"
-    curl -O https://fastly.jsdelivr.net/gh/sitoi/dailycheckin@main/docker/docker-compose.yml
+    curl -O https://raw.githubusercontent.com/ByteRax/dailycheckin_plus/main/docker/docker-compose.yml
     echo "开始通过 docker-compose 命令创建容器"
     docker-compose pull
     docker-compose up -d
