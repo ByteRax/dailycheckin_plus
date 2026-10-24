@@ -14,8 +14,11 @@ class Tieba(CheckIn):
     name = "百度贴吧"
 
     def __init__(self, check_item: dict):
+        # TBS_URL 保持 http：https 版服务端 301 强制跳回 http://...?red_tag=...，
+        # 改 https 多一跳重定向且 Cookie 最终仍明文，无安全收益（Refs: 安全审查 A09 H-3）
         self.TBS_URL = "http://tieba.baidu.com/dc/common/tbs"
-        self.LIKE_URL = "http://c.tieba.baidu.com/c/f/forum/like"
+        # LIKE_URL 携 BDUSS 表单，https 版探测 200+证书校验通过、响应与 http 基线一致（Refs: 安全审查 A09 H-3）
+        self.LIKE_URL = "https://c.tieba.baidu.com/c/f/forum/like"
         # Refs: Sitoi/dailycheckin#509 签到接口域名已由 c.tieba.baidu.com 迁移到 tiebac.baidu.com
         self.SIGN_URL = "https://tiebac.baidu.com/c/c/forum/sign"
         self.LOGIN_INFO_URL = "https://zhidao.baidu.com/api/loginInfo"
