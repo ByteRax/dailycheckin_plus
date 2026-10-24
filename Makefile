@@ -1,10 +1,7 @@
-.PHONY: clean sdist upload pre-commit mkdocs
+.PHONY: clean sdist pre-commit mkdocs
 
 sdist: clean
-	python3 setup.py sdist bdist_wheel --universa
-
-upload: clean
-	python3 setup.py upload
+	python3 -m build --sdist --wheel --outdir dist/ .
 
 clean:
 	rm -rf build dailycheckin.egg-info dist
