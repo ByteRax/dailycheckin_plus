@@ -27,7 +27,9 @@ class V2ex(CheckIn):
         urls = re.findall(pattern=pattern, string=response.text)
         url = urls[0] if urls else None
         if url is None:
-            return [{"name": "签到失败", "value": "cookie 可能过期"}]
+            # Refs: Sitoi/dailycheckin#525 未匹配到 once 签到链接时显式抛错，
+            # 由上层记 ❌，不再静默返回造成首跑假成功
+            raise Exception("未找到签到入口（可能已签到或 Cookie 失效），请检查")
         elif url != "/balance":
             headers = {"Referer": "https://www.v2ex.com/mission/daily"}
             data = {"once": url.split("=")[-1]}
