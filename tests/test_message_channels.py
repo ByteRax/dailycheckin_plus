@@ -1,8 +1,8 @@
-"""通知渠道离线测试（全部 monkeypatch requests，无网络）。
+"""通知渠道离线测试(全部 monkeypatch requests, 无网络).
 
-覆盖：
-- utils/message.py 全部推送请求带 timeout=10（横切回归）；
-- push_message 内单渠道异常隔离（一坏不影响其他渠道与整体流程）。
+覆盖:
+- utils/message.py 全部推送请求带 timeout=10(横切回归);
+- push_message 内单渠道异常隔离(一坏不影响其他渠道与整体流程).
 """
 
 import pytest
@@ -239,7 +239,9 @@ def test_bark_group_icon_as_query_params(fake_http):
     message.message2bark("https://api.day.app/KEY", "签到", bark_group="daily", bark_icon="https://example.com/i.png")
     (call,) = fake_http.calls
     assert call["method"] == "GET"
-    assert call["url"] == "https://api.day.app/KEY/%E7%AD%BE%E5%88%B0?group=daily&icon=https%3A%2F%2Fexample.com%2Fi.png"
+    assert (
+        call["url"] == "https://api.day.app/KEY/%E7%AD%BE%E5%88%B0?group=daily&icon=https%3A%2F%2Fexample.com%2Fi.png"
+    )
     assert call["timeout"] == 10
 
 

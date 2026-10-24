@@ -111,9 +111,7 @@ def message2bark(bark_url: str, content, bark_group=None, bark_icon=None):
         query["group"] = bark_group
     if bark_icon:
         query["icon"] = bark_icon
-    url = urlunsplit(
-        (parts.scheme, parts.netloc, path + quote_plus(content), urlencode(query), parts.fragment)
-    )
+    url = urlunsplit((parts.scheme, parts.netloc, path + quote_plus(content), urlencode(query), parts.fragment))
     headers = {"Content-type": "application/x-www-form-urlencoded"}
     requests.get(url=url, headers=headers, timeout=10)
 
@@ -219,7 +217,7 @@ def message2wpush(wpush_apikey, content, wpush_channel=None, wpush_topic_code=No
     if result.get("code") == 0:
         print("WPUSH 推送成功！")
     else:
-        print(f'WPUSH 推送失败！错误信息：{result.get("message") or result}')
+        print(f"WPUSH 推送失败！错误信息：{result.get('message') or result}")
 
 
 def message2gotify(gotify_url: str, gotify_token: str, gotify_priority: str, content: str) -> None:
