@@ -1,6 +1,6 @@
 """基线特征测试:服务注册表 checkin_map。
 
-锁定 `import dailycheckin` 后的注册结果:16 个服务,值为 (显示名, 类) 二元组。
+锁定 `import dailycheckin` 后的注册结果:17 个服务,值为 (显示名, 类) 二元组。
 对应实现:dailycheckin/__init__.py(pkgutil 自动发现)与 dailycheckin/configs.py 的 checkin_map。
 """
 
@@ -15,6 +15,7 @@ EXPECTED_SERVICES = {
     "BAIDU": "百度站点提交",
     "BAIDUWP": "百度网盘",
     "BILIBILI": "Bilibili",
+    "DISCUZ": "通用 Discuz 论坛",
     "ENSHAN": "恩山无线论坛",
     "FNNASCLUB": "飞牛Nas论坛",
     "IMAOTAI": "i茅台",
@@ -28,9 +29,9 @@ EXPECTED_SERVICES = {
 }
 
 
-def test_import_dailycheckin_registers_16_services():
+def test_import_dailycheckin_registers_17_services():
     assert isinstance(checkin_map, dict)
-    assert len(checkin_map) == 16
+    assert len(checkin_map) == 17
 
 
 def test_checkin_map_covers_expected_keys():
