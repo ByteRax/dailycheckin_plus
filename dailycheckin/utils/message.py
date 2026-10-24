@@ -271,8 +271,10 @@ def message2xxtui(xxtui_key, content):
 
 
 def important_notice():
+    # fork 版：重要通知改为读取本 fork 仓库带「通知」标签的开放 issue（原实现指向上游仓库）
     datas = requests.get(
-        url="https://api.github.com/repos/Sitoi/dailycheckin/issues?state=open&labels=通知", timeout=10
+        url="https://api.github.com/repos/ByteRax/dailycheckin_plus/issues?state=open&labels=通知",
+        timeout=10,
     ).json()
     if datas:
         data = datas[0]
@@ -483,8 +485,8 @@ def push_message(content_list: list, notice_info: dict):
                     content=message,
                 )
             except Exception as e:
-                print("Xxtui 推送失败", e)
+                print("Xxtui 推送失败", str(e).replace(xxtui_key, "***"))
 
 
 if __name__ == "__main__":
-    print(important_notice())
+    print("message.py 各渠道请通过 config.json 通知配置触发；本模块无独立自测入口")

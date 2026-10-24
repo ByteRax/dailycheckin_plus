@@ -102,10 +102,6 @@ def _patch_run(monkeypatch, service_cls):
         dailycheckin.main, "check_config", lambda task_list: ({"notice": {}}, {"fake": [{"cookie": "a"}]})
     )
 
-    def offline_get(*args, **kwargs):
-        raise RuntimeError("offline test")
-
-    monkeypatch.setattr(dailycheckin.main.requests, "get", offline_get)
     monkeypatch.setattr(
         dailycheckin.main,
         "push_message",

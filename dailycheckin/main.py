@@ -4,8 +4,6 @@ import os
 import time
 from datetime import datetime, timedelta, timezone
 
-import requests
-
 from dailycheckin.__version__ import __version__
 from dailycheckin.configs import checkin_map, get_checkin_info, get_notice_info
 from dailycheckin.utils.message import push_message
@@ -211,18 +209,12 @@ def checkin():
                 content_list.append(f"「{check_name}」\n{e}")
                 print(f"第 {index + 1} 个账号: ❌❌❌❌❌\n{e}")
     print("\n\n")
-    try:
-        url = "https://pypi.org/pypi/dailycheckin/json"
-        latest_version = requests.get(url=url, timeout=30).json()["info"]["version"]
-    except Exception:
-        print("获取最新版本失败")
-        latest_version = "0.0.0"
+    # fork 不再检查上游 PyPI 版本：同名 PyPI 项目归上游所有，对比结果会误导用户装回上游包
     content_list.append(
         f"开始时间: {utc_time}\n"
         f"任务用时: {int(time.time() - start_time)} 秒\n"
         f"当前版本: {__version__}\n"
-        f"最新版本: {latest_version}\n"
-        f"项目地址: https://github.com/Sitoi/dailycheckin"
+        f"项目地址: https://github.com/ByteRax/dailycheckin_plus"
     )
     push_message(content_list=content_list, notice_info=notice_info)
     return

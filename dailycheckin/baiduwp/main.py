@@ -50,7 +50,7 @@ class BaiduWP(CheckIn):
         return result
 
     def _get(self, url: str):
-        resp = self.session.get(url)
+        resp = self.session.get(url, timeout=10)
         cookie_changed = False
         now = time.time()
 
@@ -130,6 +130,8 @@ class BaiduWP(CheckIn):
             with open(temp_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
                 f.write("\n")
+                f.flush()
+                os.fsync(f.fileno())
             os.replace(temp_path, config_path)
             print("已将更新后的 Cookie 写回 config.json")
         except Exception as e:

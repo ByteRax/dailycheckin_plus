@@ -186,3 +186,22 @@ class TestCredentialHygiene:
         # 后续请求 (答题/查询) 应带上服务器续期后的 STOKEN
         later_cookie = rsps.calls[-1].request.headers["Cookie"]
         assert "STOKEN=newtoken1" in later_cookie
+
+
+def test_get_uses_timeout(monkeypatch):
+    # _get 是 baiduwp 全部请求出口，必须带 timeout（A09 M-1）
+    obj = BaiduWP.__new__(BaiduWP)
+    captured = {}
+
+    class FakeResp:
+        def __init__(self):
+            self.cookies = []
+
+    class FakeSession:
+        def get(self, url, **kw):
+            captured.update(kw, url=url)
+            return FakeResp()
+
+    obj.session = FakeSession()
+    obj._get("https://example.com/x")
+    assert captured.get("timeout") == 10

@@ -274,3 +274,36 @@ def test_wpush_code_false_is_failure(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "推送成功" not in out
     assert "推送失败" in out
+
+
+def test_important_notice_reads_fork_repo(monkeypatch):
+    # fork 版重要通知必须读本 fork 仓库，不得继续指向上游 Sitoi/dailycheckin
+    captured = {}
+
+    class FakeResp:
+        def json(self):
+            return []
+
+    def fake_get(**kw):
+        captured.update(kw)
+        return FakeResp()
+
+    monkeypatch.setattr(message.requests, "get", fake_get)
+    assert message.important_notice() is None
+    assert "ByteRax/dailycheckin_plus" in captured["url"]
+    assert "Sitoi" not in captured["url"]
+
+
+def test_xxtui_failure_log_masks_key(monkeypatch, capsys):
+    # xxtui 失败日志不得泄露 key（requests 异常串内含完整 URL）
+    key = "secret-xxtui-key-123"
+
+    def raise_with_url(*a, **kw):
+        raise Exception(f"HTTPSConnectionPool(host='www.xxtui.com'): Max retries exceeded with url: /xxtui/{key}")
+
+    monkeypatch.setattr(message, "message2xxtui", raise_with_url)
+    monkeypatch.setattr(message, "important_notice", lambda: None)
+    message.push_message(content_list=["hi"], notice_info={"xxtui_key": key, "merge_push": True})
+    out = capsys.readouterr().out
+    assert key not in out
+    assert "***" in out

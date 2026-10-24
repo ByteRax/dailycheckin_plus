@@ -17,13 +17,15 @@ class BiliBili(CheckIn):
     @staticmethod
     def get_nav(session):
         url = "https://api.bilibili.com/x/web-interface/nav"
-        ret = session.get(url=url).json()
-        uname = ret.get("data", {}).get("uname")
-        uid = ret.get("data", {}).get("mid")
-        is_login = ret.get("data", {}).get("isLogin")
-        coin = ret.get("data", {}).get("money")
-        vip_type = ret.get("data", {}).get("vipType")
-        current_exp = ret.get("data", {}).get("level_info", {}).get("current_exp")
+        ret = session.get(url=url, timeout=10).json()
+        # data 可能为 null（接口风控/降级），此时按未登录处理，避免 AttributeError
+        data = ret.get("data") or {}
+        uname = data.get("uname")
+        uid = data.get("mid")
+        is_login = data.get("isLogin")
+        coin = data.get("money")
+        vip_type = data.get("vipType")
+        current_exp = data.get("level_info", {}).get("current_exp")
         return uname, uid, is_login, coin, vip_type, current_exp
 
     @staticmethod

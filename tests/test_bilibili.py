@@ -212,3 +212,20 @@ def test_coin_loop_sleeps_random_2_to_5_seconds(monkeypatch):
     assert sleeps == [3.0]
     assert uniform_args == [(2, 5)]
     assert "今日成功投币2/2" in msg
+
+
+def test_get_nav_data_null_treated_as_not_login(monkeypatch):
+    # nav 接口 data:null（风控/降级）不崩溃，按未登录处理（Refs: Sitoi/dailycheckin#585）
+    class FakeResp:
+        @staticmethod
+        def json():
+            return {"code": -101, "data": None}
+
+    class FakeSession:
+        @staticmethod
+        def get(url, **kw):
+            assert kw.get("timeout"), "get_nav 请求必须带 timeout"
+            return FakeResp()
+
+    uname, uid, is_login, coin, vip_type, exp = BiliBili.get_nav(FakeSession())
+    assert is_login is None and uname is None
