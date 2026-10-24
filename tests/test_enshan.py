@@ -76,7 +76,7 @@ class TestSignFlow:
         assert "恩山币" in msg and "88" in msg
         assert "积分" in msg and "666" in msg
 
-        forum_req, sign_req, credit_req = [call.request for call in rsps.calls]
+        forum_req, sign_req, credit_req = (call.request for call in rsps.calls)
         # 签到 POST 保持新签到流：带 formhash 表单
         sign_body = sign_req.body.decode() if isinstance(sign_req.body, bytes) else sign_req.body
         assert "formhash=ab12cd" in sign_body
@@ -91,7 +91,7 @@ class TestSignFlow:
 
         EnShan(check_item={"cookie": "htVD_2132_auth=tokenA"}).main()
 
-        forum_req, sign_req, credit_req = [call.request for call in rsps.calls]
+        forum_req, sign_req, credit_req = (call.request for call in rsps.calls)
         for page_req in (forum_req, credit_req):
             assert page_req.headers["User-Agent"] == UA_562
             assert page_req.headers["Accept"].startswith("text/html")

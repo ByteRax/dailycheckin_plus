@@ -82,8 +82,7 @@ class Custom(CheckIn):
         user_headers = self.check_item.get("headers")
         if isinstance(user_headers, dict):
             headers.update({str(k): str(v) for k, v in user_headers.items()})
-        cookie = self.check_item.get("cookie")
-        if cookie:
+        if cookie := self.check_item.get("cookie"):
             headers["Cookie"] = str(cookie)
         body = self.check_item.get("body")
 

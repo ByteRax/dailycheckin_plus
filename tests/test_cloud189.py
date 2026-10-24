@@ -15,6 +15,7 @@ signature.ts / util.ts, 2026-10 快照):
 RSA 加密用固定 fixture 密钥对做加解密回环断言(PKCS1 v1.5 密文随机, 无法断言固定密文)。
 """
 
+import base64
 import re
 from urllib.parse import parse_qs, urlparse
 
@@ -25,14 +26,18 @@ from Crypto.PublicKey import RSA
 
 from dailycheckin.cloud189.main import Cloud189
 
-# 固定 fixture RSA 密钥对(1024 位, 仅测试用; 对应 encryptConf.do 下发的 pubKey 形态:
-# 无 PEM 头尾的 base64 DER SubjectPublicKeyInfo)
-PUBLIC_KEY_B64 = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC1POc+bbh+N/wclFtlHpayWVwKQaq4zNpDNIUWu9gBVHQEnSttfiRq8ytah1ue+6uRSnq/tpc8rkuF62Z2Ir8K5DU3djFpeSWNCJfOx4C9nAPS0pNEjxIKEZ71pzrUPYPgyT80AbZfAp5sav6lAFcKKtpLe7N2RiQmpP9pUnWGCwIDAQAB"
-PRIVATE_KEY_PEM = (
-    "-----BEGIN RSA PRIVATE KEY-----\n"
-    "MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBALU85z5tuH43/ByUW2UelrJZXApBqrjM2kM0hRa72AFUdASdK21+JGrzK1qHW577q5FKer+2lzyuS4XrZnYivwrkNTd2MWl5JY0Il87HgL2cA9LSk0SPEgoRnvWnOtQ9g+DJPzQBtl8Cnmxq/qUAVwoq2kt7s3ZGJCak/2lSdYYLAgMBAAECgYBrqpuhbaMdcHrYK5ZD8zEJEKbp/OrD0AaVyByMTdlbqOUnXItRB4/w7TbDGAho4Q+iR4G2ZG1iAhUhoJ+E7M1aVZBFSihZzyKAuf9RNvuBxTfqtxyn3yGOrjClzOKGOhhcgIzBfrdmPwOuDRYRet/e2tUgLAny2bQvmp54pW9q4QJBAOX/8z60wiBw9lxTUP5B5crqwsf4dDg08k3bIjFikEQkw/2n6esfkdC6/r9DZDRGyCe5K1aiNnU3PJIRVDFpg3ECQQDJudB3mXRD/1heI2waV3nh6Bv4EPXwWAIMPlAHGzqIyk6p50xuu6TMqsz2ifrcjxKhwSNLF5UFvSKuzlCmdGs7AkB0npjpvKGJ7X0dRymUIjmv7+Ufm/zh2wbZLzlhLQbVZobyAMf87h7zZT1yIWuXjiRC8ALnhIx0VrOhpKO6AjQhAkB22kDmRoaHDaouBObLemC4Zj4cYTnWOrQyLICQP020jKXeWwXgdDQ71iJe25rvWmia3yWBN8q4j+AgaDSCbjNDAkA3lm5U8ijWa694JbEAUsntgiXUAOMtctQXJOz51I1dAAW5Xf6Xk+IaYR1aPikPE0Wnh6EU3P2NJ3nyyf50J8Ed\n"
-    "-----END RSA PRIVATE KEY-----"
-)
+
+# RSA 密钥对在导入时生成（1024 位，仅测试用；对应 encryptConf.do 下发的 pubKey 形态：
+# 无 PEM 头尾的 base64 DER SubjectPublicKeyInfo）。
+# 不内嵌 PEM 文本——detect-private-key 钩子会把私钥字面量当作真实泄漏挡下 pre-commit。
+def _generate_fixture_keypair():
+    _key = RSA.generate(1024)
+    _pub_b64 = base64.b64encode(_key.publickey().export_key(format="DER")).decode()
+    _priv_pem = _key.export_key(format="PEM").decode()
+    return _pub_b64, _priv_pem
+
+
+PUBLIC_KEY_B64, PRIVATE_KEY_PEM = _generate_fixture_keypair()
 
 USERNAME = "18912345678"
 PASSWORD = "p@ssw0rd-测试"
