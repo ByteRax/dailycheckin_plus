@@ -213,8 +213,9 @@ def message2wpush(wpush_apikey, content, wpush_channel=None, wpush_topic_code=No
         print("WPUSH 推送失败！响应解析失败")
         return
     # 成败只按响应 body 的 code 判定：WPUSH 鉴权失败时返回 HTTP 200 + body code 401，
-    # 按 HTTP 状态码判定不可行（live 验证见 A02）。
-    if result.get("code") == 0:
+    # 按 HTTP 状态码判定不可行（live 验证见 A02）。code 为布尔值时不得视为 0 成功。
+    code = result.get("code")
+    if code == 0 and not isinstance(code, bool):
         print("WPUSH 推送成功！")
     else:
         print(f"WPUSH 推送失败！错误信息：{result.get('message') or result}")

@@ -261,3 +261,18 @@ def test_push_message_passes_bark_options(monkeypatch):
     monkeypatch.setattr(message, "message2bark", lambda **kw: sent.append(kw))
     message.push_message(["a"], {"bark_url": "u", "bark_group": "g", "bark_icon": "i"})
     assert sent == [{"bark_url": "u", "content": "a", "bark_group": "g", "bark_icon": "i"}]
+
+
+def test_wpush_code_false_is_failure(monkeypatch, capsys):
+    # code:false 不得因 False == 0 被误判成功（bool 显式排除）
+    from dailycheckin.utils import message as m
+
+    class FakeResp:
+        def json(self):
+            return {"code": False, "message": "forbidden"}
+
+    monkeypatch.setattr(m.requests, "post", lambda **kw: FakeResp())
+    m.message2wpush("k", "hello")
+    out = capsys.readouterr().out
+    assert "推送成功" not in out
+    assert "推送失败" in out
