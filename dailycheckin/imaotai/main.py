@@ -12,6 +12,10 @@ from Crypto.Cipher import AES
 from dailycheckin import CheckIn
 
 
+class ImaotaiAPIError(Exception):
+    """上游接口整体失效（如 shop/list v3 下线）的硬失败，main() 需透传为账号失败。"""
+
+
 class Encrypt:
     def __init__(self, key, iv):
         self.key = key.encode("utf-8")
@@ -216,7 +220,7 @@ userId: 2
         # Refs: Sitoi/dailycheckin#563 #568 v3 对象存储路径已被上游删除（404 + NoSuchKey），
         # 疑似升级 v4；明确报错等待适配，不编造 v4 接口、不做无限重试
         if responses.status_code == 404 or "NoSuchKey" in responses.text:
-            raise Exception("门店列表接口已失效（疑似上游升级 v4），等待适配")
+            raise ImaotaiAPIError("门店列表接口已失效（疑似上游升级 v4），等待适配")
         if responses.status_code != 200:
             print(
                 f"get_location_count : params : {day_time}, response code : {responses.status_code}, response body : {responses.text}"
@@ -337,6 +341,9 @@ userId: 2
                 award_msg = self.getUserEnergyAward()
                 msg.append(reservation_msg)
                 msg.append(award_msg)
+        except ImaotaiAPIError:
+            # 硬失败透传，由上层按账号失败（❌）处理，不再吞进返回文案打 ✅
+            raise
         except BaseException as e:
             msg.append(
                 {

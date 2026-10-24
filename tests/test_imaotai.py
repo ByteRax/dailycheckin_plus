@@ -69,3 +69,56 @@ def test_get_location_count_normal_path(monkeypatch):
         lambda url, **kwargs: FakeResponse(200, '{"data": {}}', payload={"data": {"shops": shops}}),
     )
     assert _call(obj) == "1"
+
+
+def test_main_reraises_imaotai_api_error(monkeypatch):
+    # main() 不得把 ImaotaiAPIError 吞进返回文案（否则账号仍打 ✅，见 #563 主诉）
+    obj = _imaotai_instance()
+    obj.ITEM_CODES = []  # __init__ 被跳过，补齐 main() 引用的类实例属性
+    obj.check_item = {
+        "mobile": "13800000000",
+        "province": "贵州省",
+        "city": "贵阳市",
+        "token": "placeholder",
+        "userid": "1",
+        "lat": "29.83826",
+        "lng": "102.182324",
+        "item_codes": ["11318"],
+    }
+    monkeypatch.setattr(obj, "get_map", lambda **kw: ({}, {}))
+    monkeypatch.setattr(obj, "get_current_session_id", lambda: None)
+    monkeypatch.setattr(obj, "init_headers", lambda **kw: None)
+    from dailycheckin.imaotai.main import ImaotaiAPIError
+
+    def _raise(**kw):
+        raise ImaotaiAPIError("门店列表接口已失效（疑似上游升级 v4），等待适配")
+
+    monkeypatch.setattr(obj, "get_location_count", _raise)
+    with pytest.raises(ImaotaiAPIError):
+        obj.main()
+
+
+def test_main_swallows_only_soft_failures(monkeypatch):
+    # 非硬失败（如单个 item 的普通异常）仍按原行为并入返回文案，不改变既有语义
+    obj = _imaotai_instance()
+    obj.ITEM_CODES = []  # __init__ 被跳过，补齐 main() 引用的类实例属性
+    obj.check_item = {
+        "mobile": "13800000000",
+        "province": "贵州省",
+        "city": "贵阳市",
+        "token": "placeholder",
+        "userid": "1",
+        "lat": "29.83826",
+        "lng": "102.182324",
+        "item_codes": ["11318"],
+    }
+    monkeypatch.setattr(obj, "get_map", lambda **kw: ({}, {}))
+    monkeypatch.setattr(obj, "get_current_session_id", lambda: None)
+    monkeypatch.setattr(obj, "init_headers", lambda **kw: None)
+
+    def _raise(**kw):
+        raise ValueError("boom")
+
+    monkeypatch.setattr(obj, "get_location_count", _raise)
+    result = obj.main()
+    assert "boom" in result
