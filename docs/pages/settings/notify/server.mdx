@@ -100,5 +100,5 @@ import { Cards, Card } from 'nextra/components'
 
 |       参数       |                                说明                                 |
 | :--------------: | :-----------------------------------------------------------------: |
-|   _**SCKEY**_    | server 酱推送[官方文档](https://sc.ftqq.com) ,填写 `SCKEY` 代码即可 |
+|   _**SCKEY**_    | Server 酱推送 key，按前缀自动路由：`SCT` → Turbo（sctapi.ftqq.com）；`sctp{uid}t…` → Server酱³（`<uid>.push.ft07.com`）；更旧格式 → sc.ftqq.com。Turbo 文档 [sc.ftqq.com](https://sc.ftqq.com)，Server酱³ 文档 [doc2.ft07.com](https://doc2.ft07.com/zh/serverchan3/server/api) |
 | _**MERGE_PUSH**_ |            **true**: 将推送消息合并；**false**: 分开推送            |
