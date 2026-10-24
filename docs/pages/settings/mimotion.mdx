@@ -34,3 +34,11 @@ import CardList from '../../components/CardList'
 | _**MIMOTION**_.password |      小米运动刷步数的账号密码      |
 | _**MIMOTION**_.min_step |      小米运动刷步数的最小步数      |
 | _**MIMOTION**_.max_step |      小米运动刷步数的最大步数      |
+| _**MIMOTION**_.app_token |   登录凭证（可选），可留空    |
+| _**MIMOTION**_.user_id  |      用户 ID（可选），可留空       |
+
+<Callout type="info">
+  `app_token` 与 `user_id` 均为可选字段，留空即可：首次运行登录成功后会自动把这两个字段写回
+  `config.json`，之后每次运行直接复用凭证提交步数，不再反复登录，避开小米运动登录接口的频率限制；
+  凭证失效时会自动重新登录并更新写回。
+</Callout>

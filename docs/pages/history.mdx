@@ -8,11 +8,18 @@ import { Callout } from 'nextra/components'
 
 - 新增「WPUSH」通知渠道（吸收 #590）
 - 新增「xxtui」通知渠道（吸收 #564）
+- 新增「自定义 Webhook」通知渠道，支持 `WEBHOOK_METHOD`（POST/GET）与 `WEBHOOK_BODY` JSON 模板占位符（吸收 #578，可覆盖 MeoW #547、Synology Chat #403 场景）
+- 新增「PushMe」通知渠道（吸收 #435）
+- 新增「青龙 QLAPI」通知桥，复用青龙面板已配置的通知渠道，仅青龙环境生效（吸收 #573）
+- 新增「SMTP」邮件通知渠道，465 SSL / 587 STARTTLS 自动选择（吸收 #579）
+- 新增「PushDeer」通知渠道（吸收 #558，重实现 #366）
+- 新增「wxPusher」通知渠道（重实现 #366）
 - 「qmsg 酱」支持 `QMSG_QQ` / `QMSG_BOT` 参数与 `QMSG_URL` 私有部署地址（吸收 #566 #453）
 - 「Bark」支持 `BARK_GROUP` / `BARK_ICON` 参数，并修复 URL 带 query 时被顶坏的拼接缺陷（吸收 #387 #523，重实现 #320 的 group/icon 部分）
 - CLI 新增 `--accounts "1,3-5"` 按账号序号执行部分账号（重实现 #544，参考 #533 #565）
 - `--include` / `--exclude` 服务名大小写不敏感，未知服务名输出警告与可用服务列表
 - 补齐模板中缺失的通知键：`QYWX_ORIGIN`、`GOTIFY_URL/TOKEN/PRIORITY`、`NTFY_URL/TOPIC/PRIORITY`
+- 模板新增第二批 14 个通知键：`WEBHOOK_URL/METHOD/BODY`、`PUSHME_KEY`、`QLAPI`、`SMTP_SERVER/PORT/SSL/USER/PASSWORD/TO`、`PUSHDEER_PUSHKEY`、`WXPUSHER_APPTOKEN/WXPUSHER_UIDS`
 
 ### 🐛 修复
 
@@ -24,6 +31,7 @@ import { Callout } from 'nextra/components'
 - 修复「百度贴吧」签到接口失效（#509）
 - 修复「飞牛 NAS」登录失效后无提示的问题（#589）
 - 修复「i 茅台」门店列表接口 404 与接口失败时的假成功（#563 #568）
+- 「小米运动」登录成功后自动保存并复用 `app_token` / `user_id`（可选字段，首跑自动写回 `config.json`），避免每次运行都登录触发接口频率限制（#533 #565）
 - 修复任务无返回结果时被误报为签到成功的问题
 - `datetime.utcnow` 替换为时区感知写法，消除 Python 3.12+ 弃用告警
 

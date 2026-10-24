@@ -108,6 +108,12 @@ pip install "dailycheckin @ git+https://github.com/ByteRax/dailycheckin_plus@mai
 - ntfy（安卓）
 - wpush（微信）
 - xxtui（微信）
+- 自定义 webhook（MeoW、Synology Chat 等任意 webhook 服务）
+- PushMe
+- 青龙 QLAPI（复用青龙面板通知）
+- SMTP（邮件）
+- PushDeer
+- wxPusher（微信）
 
 ## 🔀 与上游差异
 
