@@ -24,8 +24,10 @@ import { FileTree } from 'nextra/components'
 运行如下命令一键启动并创建服务
 
 ```bash copy
-curl https://fastly.jsdelivr.net/gh/sitoi/dailycheckin@main/docker_start.sh | bash
+curl https://raw.githubusercontent.com/ByteRax/dailycheckin_plus/main/docker_start.sh | bash
 ```
+
+> 镜像地址：`ghcr.io/byterax/dailycheckin_plus:latest`（amd64 / arm64），由本仓库源码构建。国内网络如无法访问 raw.githubusercontent.com，可将命令中的域名替换为 `https://fastly.jsdelivr.net/gh/ByteRax/dailycheckin_plus@main/docker_start.sh`。
 
 > 运行成功会自动创建如下目录结构, 并成功启动 docker 服务。
 
@@ -81,9 +83,12 @@ curl https://fastly.jsdelivr.net/gh/sitoi/dailycheckin@main/docker_start.sh | ba
 修改 `./cron/crontab_list.sh` 文件, 根据实际情况修改下面的默认文件。
 
 ```bash filename="crontab_list.sh" copy
+# debian(slim) cron 的默认 PATH 不保证包含 /usr/local/bin（上游 alpine 镜像靠 /usr/bin 软链兜底），
+# 显式声明 PATH 确保定时任务能解析到源码安装的 dailycheckin 入口
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
 ##############默认任务##############
-# 每 12 小时更新 Pipy 包，如果不需要更新 pypi 包请注释掉下面这行
-0 */12 * * * echo "定时任务更新依赖..." && pip install dailycheckin --upgrade --user >> /dailycheckin/logs/update-pypi.log 2>&1
+# fork 镜像固定源码版本，升级 = 拉新镜像（原每 12 小时 PyPI 自动升级任务已移除）
 # 每天的 23:50 分清理一次日志
 50 23 */2 * * rm -rf /dailycheckin/logs/*.log
 
@@ -100,28 +105,42 @@ curl https://fastly.jsdelivr.net/gh/sitoi/dailycheckin@main/docker_start.sh | ba
 docker exec -it dailycheckin dailycheckin
 ```
 
-#### 运行指定脚本（包含），可以同时选择多个，用「空格」分开
+#### 运行指定脚本（包含），可以同时选择多个，用「空格」分开（服务名大小写不敏感）
 
 ```bash copy
-docker exec -it dailycheckin dailycheckin --include MUSIC163 BAIDU
+docker exec -it dailycheckin dailycheckin --include BILIBILI BAIDU
 ```
 
-#### 运行指定脚本（排除），可以同时选择多个，用「空格」分开
+#### 运行指定脚本（排除），可以同时选择多个，用「空格」分开（服务名大小写不敏感）
 
 ```bash copy
-docker exec -it dailycheckin dailycheckin --exclude MUSIC163 BAIDU
+docker exec -it dailycheckin dailycheckin --exclude BILIBILI BAIDU
 ```
 
-## 更新 Pypi
+#### 运行部分账号，`--accounts` 按账号序号选择（1 开始，闭区间，逗号与范围可混用）
 
 ```bash copy
-docker exec dailycheckin sh /dailycheckin/default_task.sh
+docker exec -it dailycheckin dailycheckin --accounts "1,3-5"
 ```
 
-## 升级 Docker Image
+## 更新
+
+镜像固定为源码构建版本，升级程序 = 拉取新镜像（不再从 PyPI 自动升级）。
 
 ```bash copy
-curl https://fastly.jsdelivr.net/gh/sitoi/dailycheckin@main/docker_start.sh | bash
+docker pull ghcr.io/byterax/dailycheckin_plus:latest
+```
+
+docker-compose 部署时：
+
+```bash copy
+docker-compose pull && docker-compose up -d
+```
+
+或重新执行一键脚本：
+
+```bash copy
+curl https://raw.githubusercontent.com/ByteRax/dailycheckin_plus/main/docker_start.sh | bash
 ```
 
 ## 附录

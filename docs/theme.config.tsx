@@ -4,7 +4,7 @@ import { DocsThemeConfig } from 'nextra-theme-docs'
 const config: DocsThemeConfig = {
   logo: <span className="nx-text-3xl nx-font-bold">DailyCheckin</span>,
   project: {
-    link: 'https://github.com/Sitoi/dailycheckin',
+    link: 'https://github.com/ByteRax/dailycheckin_plus',
   },
   chat: {
     link: 'https://t.me/dailycheckin',
@@ -44,19 +44,10 @@ const config: DocsThemeConfig = {
       </svg>
     ),
   },
-  head: (
-    <>
-      <script
-        async
-        src="https://umami.sitoi.cn/script.js"
-        data-website-id="93cd32e8-03fb-4896-9420-6d9bff2d2359"
-      ></script>
-    </>
-  ),
   footer: {
     text: 'DailyCheckin Docs © 2024',
   },
-  docsRepositoryBase: 'https://github.com/Sitoi/dailycheckin',
+  docsRepositoryBase: 'https://github.com/ByteRax/dailycheckin_plus/tree/main/docs',
   feedback: {
     content: '',
   },
@@ -75,7 +66,7 @@ const config: DocsThemeConfig = {
     key: '2025.12.9-release',
     text: (
       <a
-        href="/dailycheckin/history/#2025-12-09"
+        href="/dailycheckin_plus/history/"
         target="_blank"
       >
         🎉 DailyCheckIn 2025.12.9 is released. Read more →

@@ -67,6 +67,8 @@ import { Callout } from 'nextra/components'
 ```json filename="config.json" copy
 {
   "BARK_URL": "",
+  "BARK_GROUP": "",
+  "BARK_ICON": "",
   "MERGE_PUSH": ""
 }
 ```
@@ -74,4 +76,6 @@ import { Callout } from 'nextra/components'
 |       参数       |                                              说明                                              |
 | :--------------: | :--------------------------------------------------------------------------------------------: |
 |  _**BARK_URL**_  | [BARK](https://bark.day.app/#/) ,填写 `BARK_URL` 例: `https://api.day.app/DxHcxxxxxRxxxxxxcm/` |
+| _**BARK_GROUP**_ |                                  消息分组（可选），例: `DailyCheckin`                                  |
+| _**BARK_ICON**_  |                              消息图标 URL（可选），例: `https://example.com/icon.png`               |
 | _**MERGE_PUSH**_ |                         **true**: 将推送消息合并；**false**: 分开推送                          |

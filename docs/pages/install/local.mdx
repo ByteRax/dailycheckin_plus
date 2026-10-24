@@ -20,9 +20,17 @@ import { Callout } from 'nextra/components'
 
 ## 一、安装
 
+<Callout
+  type="info"
+>
+  环境要求：Python 3.9 及以上。本 fork 不发布 PyPI，请使用下面的源码安装命令（PyPI 上的 `dailycheckin` 包属于上游项目）。
+</Callout>
+
 ```bash copy
-pip install dailycheckin --user
+pip install "dailycheckin @ git+https://github.com/ByteRax/dailycheckin_plus@main"
 ```
+
+也可以从 [GitHub Releases](https://github.com/ByteRax/dailycheckin_plus/releases) 下载 sdist / wheel 安装包后本地安装。
 
 ## 二、配置
 
@@ -44,20 +52,26 @@ pip install dailycheckin --user
    dailycheckin
    ```
 
-2. 运行指定脚本（包含），可以同时选择多个，用「空格」分开
+2. 运行指定脚本（包含），可以同时选择多个，用「空格」分开（服务名大小写不敏感）
 
    ```bash copy
-   dailycheckin --include MUSIC163 BAIDU
+   dailycheckin --include BILIBILI BAIDU
    ```
 
-3. 运行指定脚本（排除），可以同时选择多个，用「空格」分开
+3. 运行指定脚本（排除），可以同时选择多个，用「空格」分开（服务名大小写不敏感）
 
    ```bash copy
-   dailycheckin --exclude MUSIC163 BAIDU
+   dailycheckin --exclude BILIBILI BAIDU
+   ```
+
+4. 运行部分账号，`--accounts` 按账号序号选择（1 开始，闭区间，逗号与范围可混用），对每个服务各自的账号列表独立生效
+
+   ```bash copy
+   dailycheckin --accounts "1,3-5"
    ```
 
 ## 四、更新
 
 ```bash copy
-pip install dailycheckin --user --upgrade
+pip install --upgrade "dailycheckin @ git+https://github.com/ByteRax/dailycheckin_plus@main"
 ```

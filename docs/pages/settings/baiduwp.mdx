@@ -25,6 +25,7 @@ import CardList from '../../components/CardList'
 | cookie | 百度网盘账号的 cookie 信息 |
 
 - cookie 获取后请完整粘贴。
+- 签到成功后，程序会把续期后的新 cookie 原子回写到 `config.json`（临时文件 + 原子替换，避免写坏配置文件），实现 cookie 自动续期；若 `config.json` 所在目录以只读方式挂载（如容器只读挂载），回写会被跳过并在日志中输出警告，此时需要手动更新 cookie。
 
 ## cookie 获取方式
 

@@ -68,6 +68,9 @@ import { Callout } from 'nextra/components'
 {
   "QMSG_KEY": "",
   "QMSG_TYPE": "",
+  "QMSG_URL": "",
+  "QMSG_QQ": "",
+  "QMSG_BOT": "",
   "MERGE_PUSH": ""
 }
 ```
@@ -76,4 +79,7 @@ import { Callout } from 'nextra/components'
 | :--------------: | :--------------------------------------------------------------------------------------------: |
 |  _**QMSG_KEY**_  |              Qmsg 酱推送[官方文档](https://qmsg.zendee.cn/) ,填写 `KEY` 代码即可               |
 | _**QMSG_TYPE**_  | Qmsg 酱推送[官方文档](https://qmsg.zendee.cn/) ,如果需要推送到群填写 `group`,其他的都推送到 QQ |
+|  _**QMSG_URL**_  |          私有部署时填写 API 地址（可选），默认 `https://qmsg.zendee.cn`，不用请留空            |
+|  _**QMSG_QQ**_   |        指定接收消息的 QQ 号（可选），多个用英文逗号分隔，不用请留空，例: `10001,10002`         |
+|  _**QMSG_BOT**_  |                             机器人的 QQ 号（可选），不用请留空，例: `10000`                    |
 | _**MERGE_PUSH**_ |                         **true**: 将推送消息合并；**false**: 分开推送                          |

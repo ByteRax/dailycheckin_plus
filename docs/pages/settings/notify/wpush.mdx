@@ -1,0 +1,85 @@
+import { Cards, Card } from 'nextra/components'
+import { Callout } from 'nextra/components'
+
+<Cards>
+  <Card
+    title="BARK"
+    href="/settings/notify/bark"
+  />
+  <Card
+    title="CoolPush"
+    href="/settings/notify/coolpush"
+  />
+  <Card
+    title="钉钉"
+    href="/settings/notify/dingtalk"
+  />
+  <Card
+    title="飞书"
+    href="/settings/notify/feishu"
+  />
+  <Card
+    title="PushPlus"
+    href="/settings/notify/pushplus"
+  />
+  <Card
+    title="Qmsg 酱"
+    href="/settings/notify/qmsg"
+  />
+  <Card
+    title="企业微信应用消息"
+    href="/settings/notify/qywx"
+  />
+  <Card
+    title="企业微信群机器人"
+    href="/settings/notify/qywxrobot"
+  />
+  <Card
+    title="Server 酱"
+    href="/settings/notify/server"
+  />
+  <Card
+    title="Telegram"
+    href="/settings/notify/telegram"
+  />
+  <Card
+    title="Server 酱 TURBO"
+    href="/settings/notify/turbo"
+  />
+  <Card
+    title="Ntfy"
+    href="/settings/notify/ntfy"
+  />
+  <Card
+    title="Gotify"
+    href="/settings/notify/gotify"
+  />
+  <Card
+    title="Wpush"
+    href="/settings/notify/wpush"
+  />
+  <Card
+    title="Xxtui"
+    href="/settings/notify/xxtui"
+  />
+</Cards>
+
+# WPUSH
+
+### 配置示例
+
+```json filename="config.json" copy
+{
+  "WPUSH_APIKEY": "",
+  "WPUSH_CHANNEL": "",
+  "WPUSH_TOPIC_CODE": "",
+  "MERGE_PUSH": ""
+}
+```
+
+|         参数          |                          说明                           |
+| :-------------------: | :-----------------------------------------------------: |
+|   _**WPUSH_APIKEY**_   | [WPUSH](https://wpush.cn/) 用户 API Key，填写 `WPUSH_APIKEY` |
+|   _**WPUSH_CHANNEL**_  |      推送渠道，不填默认 `wechat`，例如: `wechat`        |
+| _**WPUSH_TOPIC_CODE**_ |             Topic 广播编码，非必填，不填不发送             |
+|   _**MERGE_PUSH**_    |     **true**: 将推送消息合并；**false**: 分开推送      |
