@@ -118,3 +118,38 @@ def test_push_message_dispatches_webhook_with_merge_split(monkeypatch):
     assert sent[0]["webhook_url"] == "https://hook.example.com/abc"
     assert sent[0]["webhook_method"] == "GET"
     assert sent[0]["webhook_body"] == '{"t":"{title}"}'
+
+
+# ---------------------------------------------------------------------------
+# pushme（Sitoi/dailycheckin#435）
+# ---------------------------------------------------------------------------
+
+
+def test_pushme_get_with_url_encoded_params(fake_http, capsys):
+    message.message2pushme("pushme-key-123", "签到 成功&下一行")
+    (call,) = fake_http.calls
+    assert call["method"] == "GET"
+    assert call["url"] == "https://push.i-i.me/pushme-key-123"
+    # title/content 必须经 requests params 机制 URL 编码，不得手工拼进 URL
+    assert call["params"] == {"title": "签到通知", "content": "签到 成功&下一行"}
+    assert "?" not in call["url"]
+    assert call["timeout"] == 10
+    assert "PushMe 推送成功" in capsys.readouterr().out
+
+
+def test_pushme_non_2xx_reports_failure(fake_http, capsys):
+    fake_http.response = FakeResponse(status_code=403, text="Forbidden")
+    message.message2pushme("bad-key", "hello")
+    out = capsys.readouterr().out
+    assert "PushMe 推送失败" in out
+    assert "403" in out
+    assert "PushMe 推送成功" not in out
+
+
+def test_push_message_dispatches_pushme_with_merge_split(monkeypatch):
+    monkeypatch.setattr(message, "important_notice", lambda: None)
+    sent = []
+    monkeypatch.setattr(message, "message2pushme", lambda **kw: sent.append(kw))
+    # 仅配置 pushme 时 merge_push 默认拆分（pushme_key 在默认集合中），两条内容各推一次
+    message.push_message(["a", "b"], {"pushme_key": "k"})
+    assert sent == [{"pushme_key": "k", "content": "a"}, {"pushme_key": "k", "content": "b"}]

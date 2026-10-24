@@ -295,6 +295,20 @@ def message2webhook(webhook_url: str, content: str, webhook_method: str = None, 
         print(f"自定义 Webhook 推送失败！HTTP {response.status_code}")
 
 
+def message2pushme(pushme_key: str, content: str) -> None:
+    print("PushMe 推送开始")
+    # title/content 由 requests params 机制负责 URL 编码
+    response = requests.get(
+        url=f"https://push.i-i.me/{pushme_key}",
+        params={"title": "签到通知", "content": content},
+        timeout=10,
+    )
+    if 200 <= response.status_code < 300:
+        print("PushMe 推送成功！")
+    else:
+        print(f"PushMe 推送失败！HTTP {response.status_code}")
+
+
 def important_notice():
     # fork 版：重要通知改为读取本 fork 仓库带「通知」标签的开放 issue（原实现指向上游仓库）
     datas = requests.get(
@@ -356,6 +370,7 @@ def push_message(content_list: list, notice_info: dict):
     webhook_url = notice_info.get("webhook_url")
     webhook_method = notice_info.get("webhook_method")
     webhook_body = notice_info.get("webhook_body")
+    pushme_key = notice_info.get("pushme_key")
     content_str = "\n————————————\n\n".join(content_list)
     merge_push = notice_info.get("merge_push")
     message_list = [content_str]
@@ -379,6 +394,7 @@ def push_message(content_list: list, notice_info: dict):
             or ntfy_topic
             or xxtui_key
             or webhook_url
+            or pushme_key
             or (gotify_url and gotify_token)
         ):
             merge_push = False
@@ -525,6 +541,11 @@ def push_message(content_list: list, notice_info: dict):
                 )
             except Exception as e:
                 print("Webhook 推送失败", e)
+        if pushme_key:
+            try:
+                message2pushme(pushme_key=pushme_key, content=message)
+            except Exception as e:
+                print("PushMe 推送失败", e)
 
 
 if __name__ == "__main__":

@@ -60,6 +60,7 @@ notice_map = {
     "WEBHOOK_URL": "",
     "WEBHOOK_METHOD": "",
     "WEBHOOK_BODY": "",
+    "PUSHME_KEY": "",
 }
 
 
