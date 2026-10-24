@@ -187,6 +187,9 @@ class MiMotion(CheckIn):
                 return self._build_msg(phone, step, response)
             if response is not None:
                 print("配置中的 app_token 已失效，重新登录获取新 token")
+            else:
+                # 网络异常（超时等）不应触发重新登录烧掉登录配额：按提交失败上报，保留 token 下次重试
+                return self._build_msg(phone, step, None)
 
         login_token, userid, app_token = self.login(phone, password)
         if login_token == 0:

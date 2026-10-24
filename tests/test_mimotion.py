@@ -308,3 +308,18 @@ class TestRequestTimeouts:
         assert "api-user.zepp.com" in urls  # 登录第一步
         assert "account.zepp.com" in urls  # 登录第二步
         assert "api-mifit-cn.huami.com" in urls  # 提交步数
+
+
+def test_network_error_keeps_token_without_relogin(monkeypatch, tmp_path):
+    # 上传超时（响应 None）不得触发重新登录烧配额，应保留 token 按失败上报
+    import dailycheckin.mimotion.main as mm
+
+    obj = mm.MiMotion.__new__(mm.MiMotion)
+    obj.check_item = {"password": "pw", "user_id": "u1", "app_token": "tok"}
+    monkeypatch.setattr(obj, "upload_step", lambda *a: None)
+    called = []
+    monkeypatch.setattr(obj, "login", lambda *a: called.append(a) or (0, None, None))
+    monkeypatch.setattr(obj, "_write_back_token", lambda *a: None)
+    result = obj.main()
+    assert called == [], "网络异常时不应触发重新登录"
+    assert "提交步数失败" in result

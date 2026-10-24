@@ -222,10 +222,11 @@ class FakeSMTPClient:
     instances: ClassVar[list] = []
     starttls_calls: ClassVar[int] = 0
 
-    def __init__(self, host, port, timeout=None):
+    def __init__(self, host, port, timeout=None, context=None):
         self.host = host
         self.port = port
         self.timeout = timeout
+        self.context = context
         self.logins = []
         self.sent = []
         self.closed = False
@@ -234,7 +235,8 @@ class FakeSMTPClient:
     def login(self, user, password):
         self.logins.append((user, password))
 
-    def starttls(self):
+    def starttls(self, context=None):
+        self.starttls_context = context
         FakeSMTPClient.starttls_calls += 1
 
     def sendmail(self, from_addr, to_addrs, msg):
@@ -413,3 +415,68 @@ def test_push_message_dispatches_wxpusher_with_merge_split(monkeypatch):
         {"wxpusher_apptoken": "tk", "wxpusher_uids": "u1,u2", "content": "a"},
         {"wxpusher_apptoken": "tk", "wxpusher_uids": "u1,u2", "content": "b"},
     ]
+
+
+def test_smtp_uses_cert_verifying_context(monkeypatch):
+    # SMTP 必须显式校验服务器证书（A09 H1）：SSL 与 STARTTLS 分支都传 context
+    import ssl as ssl_mod
+
+    import dailycheckin.utils.message as msg_mod
+
+    captured = {}
+
+    class FakeClient:
+        def __init__(self, *a, **kw):
+            captured["init"] = kw
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def starttls(self, **kw):
+            captured["starttls"] = kw
+
+        def login(self, *a):
+            pass
+
+        def sendmail(self, *a):
+            pass
+
+    monkeypatch.setattr(msg_mod.smtplib, "SMTP_SSL", FakeClient)
+    monkeypatch.setattr(msg_mod.smtplib, "SMTP", FakeClient)
+    msg_mod.message2smtp(
+        smtp_server="s.example.com",
+        smtp_user="u@example.com",
+        smtp_password="pw",
+        content="hi",
+        smtp_port="465",
+        smtp_ssl="",
+        smtp_to="a@b.com",
+    )
+    assert isinstance(captured["init"].get("context"), ssl_mod.SSLContext)
+    assert captured["init"]["context"].verify_mode != ssl_mod.CERT_NONE
+
+
+def test_webhook_and_pushme_failure_logs_mask_credentials(monkeypatch, capsys):
+    # webhook URL（可能内嵌 ?token=）与 pushme path key 不得出现在失败日志
+    url = "https://hook.example.com/x?token=secret-token-42"
+    key = "secret-pushme-key"
+
+    def raise_url(*a, **kw):
+        raise Exception(f"HTTPSConnectionPool(host='hook.example.com'): url: /x?token=secret-token-42")
+
+    def raise_key(*a, **kw):
+        raise Exception(f"HTTPSConnectionPool(host='push.i-i.me'): url: /{key}")
+
+    monkeypatch.setattr(message, "important_notice", lambda: None)
+    monkeypatch.setattr(message, "message2webhook", raise_url)
+    monkeypatch.setattr(message, "message2pushme", raise_key)
+    message.push_message(
+        content_list=["hi"],
+        notice_info={"webhook_url": url, "pushme_key": key, "merge_push": True},
+    )
+    out = capsys.readouterr().out
+    assert "secret-token-42" not in out
+    assert "secret-pushme-key" not in out

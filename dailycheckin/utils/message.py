@@ -5,6 +5,7 @@ import hmac
 import json
 import re
 import smtplib
+import ssl
 import time
 from email.header import Header
 from email.mime.text import MIMEText
@@ -353,13 +354,15 @@ def message2smtp(
     msg["From"] = smtp_user
     msg["To"] = ", ".join(recipients)
     try:
+        # 显式校验服务器证书：smtplib 缺省会话不验证证书，密码不能走不加密身份的隧道
+        ctx = ssl.create_default_context()
         if use_ssl:
-            client = smtplib.SMTP_SSL(smtp_server, port, timeout=10)
+            client = smtplib.SMTP_SSL(smtp_server, port, timeout=10, context=ctx)
         else:
             client = smtplib.SMTP(smtp_server, port, timeout=10)
         with client:
             if not use_ssl:
-                client.starttls()
+                client.starttls(context=ctx)
             client.login(smtp_user, smtp_password)
             client.sendmail(smtp_user, recipients, msg.as_string())
         print("SMTP 邮件推送成功！")
@@ -656,12 +659,18 @@ def push_message(content_list: list, notice_info: dict):
                     webhook_body=webhook_body,
                 )
             except Exception as e:
-                print("Webhook 推送失败", e)
+                # 异常串可能只含 path 形态（/x?token=…），除完整 URL 外还需掩码各查询参数值
+                secrets = [webhook_url] + [v for _, v in parse_qsl(urlsplit(webhook_url).query)]
+                masked = str(e)
+                for secret in secrets:
+                    if secret:
+                        masked = masked.replace(secret, "***")
+                print("Webhook 推送失败", masked)
         if pushme_key:
             try:
                 message2pushme(pushme_key=pushme_key, content=message)
             except Exception as e:
-                print("PushMe 推送失败", e)
+                print("PushMe 推送失败", str(e).replace(pushme_key, "***"))
         if qlapi:
             try:
                 message2qlapi(content=message)
