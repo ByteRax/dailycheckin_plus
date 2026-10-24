@@ -38,8 +38,12 @@ import { Steps } from 'nextra/components'
 #### 3. 输入依赖
 
 ```text copy
-gcc g++ make libffi-dev openssl-dev
+gcc g++ make libffi-dev libssl-dev
 ```
+
+<Callout type="info">
+  `libssl-dev` 适用于 Debian / Ubuntu 系镜像；CentOS / RHEL 系请改用 `openssl-devel`。旧的 `openssl-dev` 包名在常见发行版中不存在，会导致依赖安装失败。
+</Callout>
 
 ![输入依赖](../img/qinglong/4.png)
 
@@ -47,23 +51,22 @@ gcc g++ make libffi-dev openssl-dev
 
 ![点击确认](../img/qinglong/5.png)
 
-### 新建 Python 依赖
+### 安装 Python 依赖（源码安装本 fork）
 
-#### 1. 点击 Python
+<Callout
+  type="warning"
+  emoji="⚠️"
+>
+  PyPI 上的 `dailycheckin` 包属于上游项目，请勿直接按包名安装；本 fork 需从源码安装（青龙镜像自带 git）。
+</Callout>
 
-![点击 Linux](../img/qinglong/6.png)
+在「在线终端」执行（或新建一个定时任务，命令填写如下内容后手动运行一次）：
 
-#### 2. 点击新建依赖
+```bash copy
+pip3 install "dailycheckin @ git+https://github.com/ByteRax/dailycheckin_plus@main"
+```
 
-![点击新建依赖](../img/qinglong/7.png)
-
-#### 3. 输入 dailycheckin
-
-![输入 dailycheckin](../img/qinglong/8.png)
-
-#### 4. 点击确认，等待安装完成
-
-![点击确认](../img/qinglong/9.png)
+安装完成可通过 `pip3 show dailycheckin` 确认版本信息中 `Project-URL` 指向本 fork 仓库。
 
 </Steps>
 
@@ -110,8 +113,8 @@ gcc g++ make libffi-dev openssl-dev
 
 ## 四、更新
 
-添加一个定时任务，名称为 更新Dailycheckin（可自定义），命令为 `task pip3 install dailycheckin --upgrade`，定时规则为 0 0 * * *。
+添加一个定时任务，名称为 更新Dailycheckin（可自定义），命令为 `task pip3 install "dailycheckin @ git+https://github.com/ByteRax/dailycheckin_plus@main" --upgrade`，定时规则为 0 0 * * *。
 
-国内机器如无法完成更新，可为命令设置镜像，将命令改为 `task pip3 install dailycheckin --upgrade -i https://pypi.mirrors.ustc.edu.cn/simple/` 后再更新。
+本 fork 从 git 源码安装，不走 PyPI 镜像；国内机器如拉取 GitHub 慢，可为 git 配置代理或使用镜像加速后重试。
 
 ![定时更新](../img/qinglong/18.png)

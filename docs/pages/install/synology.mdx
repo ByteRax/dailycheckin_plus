@@ -66,9 +66,12 @@ import { FileTree } from 'nextra/components'
 修改 `./cron/crontab_list.sh` 文件, 根据实际情况修改下面的默认文件。
 
 ```bash filename="crontab_list.sh" copy
+# debian(slim) cron 的默认 PATH 不保证包含 /usr/local/bin（上游 alpine 镜像靠 /usr/bin 软链兜底），
+# 显式声明 PATH 确保定时任务能解析到源码安装的 dailycheckin 入口
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
 ##############默认任务##############
-# 每 12 小时更新 Pipy 包，如果不需要更新 pypi 包请注释掉下面这行
-0 */12 * * * echo "定时任务更新依赖..." && pip install dailycheckin --upgrade --user >> /dailycheckin/logs/update-pypi.log 2>&1
+# fork 镜像固定源码版本，升级 = 拉新镜像（原每 12 小时 PyPI 自动升级任务已移除）
 # 每天的 23:50 分清理一次日志
 50 23 */2 * * rm -rf /dailycheckin/logs/*.log
 
@@ -77,11 +80,28 @@ import { FileTree } from 'nextra/components'
 0 9 * * * cd /dailycheckin && dailycheckin >> /dailycheckin/logs/dailycheckin.log 2>&1
 ```
 
-### 注册表搜索「dailycheckin」，双击下载
+### 获取镜像
+
+<Callout
+  type="warning"
+  emoji="⚠️"
+>
+  本 fork 镜像发布在 `ghcr.io/byterax/dailycheckin_plus:latest`（amd64 / arm64），不在 Docker Hub；群晖「注册表」默认搜不到，请按下面方式获取。
+</Callout>
+
+方式一：SSH 登录群晖后手动拉取：
+
+```bash copy
+sudo docker pull ghcr.io/byterax/dailycheckin_plus:latest
+```
+
+方式二：在「注册表」→「设置」中新增 GitHub Container Registry 后搜索（部分 DSM 版本不支持 ghcr.io，建议用方式一）。
+
+> 下方截图以上游 Docker Hub 拉取流程为示意，实际映像名称为 `ghcr.io/byterax/dailycheckin_plus`。
 
 ![下载](../img/synology/03.png)
 
-### 下载完成后，点击映像，选中「dailycheckin」，点击「启动」
+### 下载完成后，点击映像，选中「dailycheckin_plus」，点击「启动」
 
 ![启动](../img/synology/04.png)
 
@@ -151,4 +171,10 @@ import { FileTree } from 'nextra/components'
 
 ## 更新
 
-自动更新
+镜像固定为源码构建版本，升级程序 = 拉取新镜像（不再从 PyPI 自动升级）。
+
+```bash copy
+sudo docker pull ghcr.io/byterax/dailycheckin_plus:latest
+```
+
+拉取后停用并删除旧容器，再按「安装」章节的步骤用新映像重新创建即可（挂载的 `config` / `cron` / `logs` 目录保持不变）。
