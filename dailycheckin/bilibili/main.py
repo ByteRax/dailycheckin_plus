@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import time
 
 import requests
@@ -36,7 +37,7 @@ class BiliBili(CheckIn):
         return list(
             filter(
                 lambda x: x["time"].split()[0] == today,
-                session.get(url=url).json().get("data").get("list"),
+                (session.get(url=url, timeout=10).json().get("data") or {}).get("list") or [],
             )
         )
 
@@ -55,7 +56,7 @@ class BiliBili(CheckIn):
         return list(
             filter(
                 lambda x: x["time"].split()[0] == today,
-                session.get(url=url).json().get("data").get("list"),
+                (session.get(url=url, timeout=10).json().get("data") or {}).get("list") or [],
             )
         )
 
@@ -250,8 +251,8 @@ class BiliBili(CheckIn):
     def live_status(session) -> dict:
         """B站直播获取金银瓜子状态"""
         url = "https://api.live.bilibili.com/pay/v1/Exchange/getStatus"
-        ret = session.get(url=url).json()
-        data = ret.get("data")
+        ret = session.get(url=url, timeout=10).json()
+        data = ret.get("data") or {}
         silver = data.get("silver", 0)
         gold = data.get("gold", 0)
         coin = data.get("coin", 0)
@@ -269,8 +270,9 @@ class BiliBili(CheckIn):
         rid int 分区号
         num int 获取视频数量
         """
-        url = "https://api.bilibili.com/x/web-interface/dynamic/region?ps=" + str(num) + "&rid=" + str(rid)
-        ret = session.get(url=url).json()
+        # dynamic/region 接口已下线（返回 {"code":-404,"data":null}），改用 newlist（Refs: Sitoi/dailycheckin#588 #586）
+        url = "https://api.bilibili.com/x/web-interface/newlist?ps=" + str(num) + "&rid=" + str(rid)
+        ret = session.get(url=url, timeout=10).json()
         data_list = [
             {
                 "aid": one.get("aid"),
@@ -278,7 +280,7 @@ class BiliBili(CheckIn):
                 "title": one.get("title"),
                 "owner": one.get("owner", {}).get("name"),
             }
-            for one in ret.get("data", {}).get("archives", [])
+            for one in (ret.get("data") or {}).get("archives") or []
         ]
         return data_list
 
@@ -313,7 +315,7 @@ class BiliBili(CheckIn):
             live_msg = self.live_sign(session=session)
             aid_list = self.get_region(session=session)
             vip_privilege_my_ret = self.vip_privilege_my(session=session)
-            welfare_list = vip_privilege_my_ret.get("data", {}).get("list", [])
+            welfare_list = (vip_privilege_my_ret.get("data") or {}).get("list") or []
             for welfare in welfare_list:
                 if welfare.get("state") == 0 and welfare.get("vip_type") == vip_type:
                     vip_privilege_receive_ret = self.vip_privilege_receive(
@@ -335,7 +337,7 @@ class BiliBili(CheckIn):
             if coin_type == 1:
                 following_list = self.get_followings(session=session, uid=uid)
                 count = 0
-                for following in following_list.get("data", {}).get("list"):
+                for following in (following_list.get("data") or {}).get("list") or []:
                     mid = following.get("mid")
                     if mid:
                         tmplist, tmpcount = self.space_arc_search(session=session, uid=mid)
@@ -348,8 +350,11 @@ class BiliBili(CheckIn):
                     aid_list += self.get_region(session=session)
                 for one in aid_list[::-1]:
                     print(one)
-            if coin_num > 0:
-                for aid in aid_list[::-1]:
+            if coin_num > 0 and aid_list:
+                # Refs: Sitoi/dailycheckin#515 连续投币之间随机等待 2-5 秒，降低人机审查风险
+                for index, aid in enumerate(aid_list[::-1]):
+                    if index > 0:
+                        time.sleep(random.uniform(2, 5))
                     ret = self.coin_add(session=session, aid=aid.get("aid"), bili_jct=bili_jct)
                     if ret["code"] == 0:
                         coin_num -= 1
@@ -365,21 +370,30 @@ class BiliBili(CheckIn):
                     if coin_num <= 0:
                         break
                 coin_msg = f"今日成功投币{success_count + coins_av_count}/{self.check_item.get('coin_num', 5)}个"
+            elif coin_num > 0:
+                coin_msg = "未获取到可用视频，跳过投币"
+                print(coin_msg)
             else:
                 coin_msg = f"今日成功投币{coins_av_count}/{self.check_item.get('coin_num', 5)}个"
-            aid = aid_list[0].get("aid")
-            cid = aid_list[0].get("cid")
-            title = aid_list[0].get("title")
-            report_ret = self.report_task(session=session, bili_jct=bili_jct, aid=aid, cid=cid)
-            if report_ret.get("code") == 0:
-                report_msg = f"观看《{title}》300秒"
+            if aid_list:
+                aid = aid_list[0].get("aid")
+                cid = aid_list[0].get("cid")
+                title = aid_list[0].get("title")
+                report_ret = self.report_task(session=session, bili_jct=bili_jct, aid=aid, cid=cid)
+                if report_ret.get("code") == 0:
+                    report_msg = f"观看《{title}》300秒"
+                else:
+                    report_msg = "任务失败"
+                share_ret = self.share_task(session=session, bili_jct=bili_jct, aid=aid)
+                if share_ret.get("code") == 0:
+                    share_msg = f"分享《{title}》成功"
+                else:
+                    share_msg = "分享失败"
+                    print(share_msg)
             else:
-                report_msg = "任务失败"
-            share_ret = self.share_task(session=session, bili_jct=bili_jct, aid=aid)
-            if share_ret.get("code") == 0:
-                share_msg = f"分享《{title}》成功"
-            else:
-                share_msg = "分享失败"
+                report_msg = "未获取到视频，跳过观看任务"
+                share_msg = "未获取到视频，跳过分享任务"
+                print(report_msg)
                 print(share_msg)
             s2c_msg = "不兑换硬币"
             if silver2coin:
@@ -409,6 +423,8 @@ class BiliBili(CheckIn):
             ]
             msg = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg])
             return msg
+        # Refs: Sitoi/dailycheckin#585 Cookie 失效时显式抛错，由上层记 ❌，不再隐式返回 None 假成功
+        raise Exception("Bilibili Cookie 已失效，请重新抓取 Cookie")
 
 
 if __name__ == "__main__":
