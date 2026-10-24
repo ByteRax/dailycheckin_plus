@@ -1,0 +1,117 @@
+import { Cards, Card } from 'nextra/components'
+import { Callout } from 'nextra/components'
+
+<Cards>
+  <Card
+    title="BARK"
+    href="/settings/notify/bark"
+  />
+  <Card
+    title="CoolPush"
+    href="/settings/notify/coolpush"
+  />
+  <Card
+    title="钉钉"
+    href="/settings/notify/dingtalk"
+  />
+  <Card
+    title="飞书"
+    href="/settings/notify/feishu"
+  />
+  <Card
+    title="PushPlus"
+    href="/settings/notify/pushplus"
+  />
+  <Card
+    title="Qmsg 酱"
+    href="/settings/notify/qmsg"
+  />
+  <Card
+    title="企业微信应用消息"
+    href="/settings/notify/qywx"
+  />
+  <Card
+    title="企业微信群机器人"
+    href="/settings/notify/qywxrobot"
+  />
+  <Card
+    title="Server 酱"
+    href="/settings/notify/server"
+  />
+  <Card
+    title="Telegram"
+    href="/settings/notify/telegram"
+  />
+  <Card
+    title="Server 酱 TURBO"
+    href="/settings/notify/turbo"
+  />
+  <Card
+    title="Ntfy"
+    href="/settings/notify/ntfy"
+  />
+  <Card
+    title="Gotify"
+    href="/settings/notify/gotify"
+  />
+  <Card
+    title="Wpush"
+    href="/settings/notify/wpush"
+  />
+  <Card
+    title="Xxtui"
+    href="/settings/notify/xxtui"
+  />
+  <Card
+    title="自定义 Webhook"
+    href="/settings/notify/webhook"
+  />
+  <Card
+    title="PushMe"
+    href="/settings/notify/pushme"
+  />
+  <Card
+    title="青龙 QLAPI"
+    href="/settings/notify/qlapi"
+  />
+  <Card
+    title="SMTP 邮件"
+    href="/settings/notify/smtp"
+  />
+  <Card
+    title="PushDeer"
+    href="/settings/notify/pushdeer"
+  />
+  <Card
+    title="wxPusher"
+    href="/settings/notify/wxpusher"
+  />
+</Cards>
+
+# 自定义 Webhook
+
+<Callout type="info">
+  通用 webhook 渠道，可以接入 MeoW、Synology Chat 等任意接收 JSON 或 query 参数的通知服务，没有专属渠道时优先用它。
+</Callout>
+
+### 配置示例
+
+```json filename="config.json" copy
+{
+  "WEBHOOK_URL": "",
+  "WEBHOOK_METHOD": "POST",
+  "WEBHOOK_BODY": "{\"title\": \"{title}\", \"content\": \"{content}\"}",
+  "MERGE_PUSH": ""
+}
+```
+
+|        参数         |                                                     说明                                                     |
+| :-----------------: | :---------------------------------------------------------------------------------------------------------: |
+| _**WEBHOOK_URL**_  |                自定义 webhook 推送地址，填写 `WEBHOOK_URL` 例: `https://example.com/webhook`                 |
+| _**WEBHOOK_METHOD**_ |       请求方法 `POST` 或 `GET`，默认 `POST`；`GET` 时标题与内容以 `title` / `content` query 参数发送        |
+| _**WEBHOOK_BODY**_ | `POST` 请求体的 JSON 模板，支持 `{title}` `{content}` 占位符；内容中的引号、换行会自动转义，`GET` 时忽略该参数 |
+|   _**MERGE_PUSH**_  |                              **true**: 将推送消息合并；**false**: 分开推送                                  |
+
+<Callout type="warning" emoji="⚠️">
+  `WEBHOOK_BODY` 渲染占位符后必须是合法 JSON，模板写错时该次推送不发送；响应非 2xx 状态码视为推送失败。
+</Callout>

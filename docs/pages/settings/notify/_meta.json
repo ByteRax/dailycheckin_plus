@@ -13,5 +13,11 @@
   "ntfy": "Ntfy",
   "gotify": "Gotify",
   "wpush": "Wpush",
-  "xxtui": "Xxtui"
+  "xxtui": "Xxtui",
+  "webhook": "Webhook",
+  "pushme": "PushMe",
+  "qlapi": "青龙 QLAPI",
+  "smtp": "SMTP 邮件",
+  "pushdeer": "PushDeer",
+  "wxpusher": "wxPusher"
 }

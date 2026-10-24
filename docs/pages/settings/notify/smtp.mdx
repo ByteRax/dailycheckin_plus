@@ -1,0 +1,119 @@
+import { Cards, Card } from 'nextra/components'
+import { Callout } from 'nextra/components'
+
+<Cards>
+  <Card
+    title="BARK"
+    href="/settings/notify/bark"
+  />
+  <Card
+    title="CoolPush"
+    href="/settings/notify/coolpush"
+  />
+  <Card
+    title="钉钉"
+    href="/settings/notify/dingtalk"
+  />
+  <Card
+    title="飞书"
+    href="/settings/notify/feishu"
+  />
+  <Card
+    title="PushPlus"
+    href="/settings/notify/pushplus"
+  />
+  <Card
+    title="Qmsg 酱"
+    href="/settings/notify/qmsg"
+  />
+  <Card
+    title="企业微信应用消息"
+    href="/settings/notify/qywx"
+  />
+  <Card
+    title="企业微信群机器人"
+    href="/settings/notify/qywxrobot"
+  />
+  <Card
+    title="Server 酱"
+    href="/settings/notify/server"
+  />
+  <Card
+    title="Telegram"
+    href="/settings/notify/telegram"
+  />
+  <Card
+    title="Server 酱 TURBO"
+    href="/settings/notify/turbo"
+  />
+  <Card
+    title="Ntfy"
+    href="/settings/notify/ntfy"
+  />
+  <Card
+    title="Gotify"
+    href="/settings/notify/gotify"
+  />
+  <Card
+    title="Wpush"
+    href="/settings/notify/wpush"
+  />
+  <Card
+    title="Xxtui"
+    href="/settings/notify/xxtui"
+  />
+  <Card
+    title="自定义 Webhook"
+    href="/settings/notify/webhook"
+  />
+  <Card
+    title="PushMe"
+    href="/settings/notify/pushme"
+  />
+  <Card
+    title="青龙 QLAPI"
+    href="/settings/notify/qlapi"
+  />
+  <Card
+    title="SMTP 邮件"
+    href="/settings/notify/smtp"
+  />
+  <Card
+    title="PushDeer"
+    href="/settings/notify/pushdeer"
+  />
+  <Card
+    title="wxPusher"
+    href="/settings/notify/wxpusher"
+  />
+</Cards>
+
+# SMTP 邮件
+
+### 配置示例
+
+```json filename="config.json" copy
+{
+  "SMTP_SERVER": "",
+  "SMTP_PORT": "465",
+  "SMTP_SSL": "",
+  "SMTP_USER": "",
+  "SMTP_PASSWORD": "",
+  "SMTP_TO": "",
+  "MERGE_PUSH": ""
+}
+```
+
+|        参数         |                                              说明                                              |
+| :-----------------: | :--------------------------------------------------------------------------------------------: |
+| _**SMTP_SERVER**_  |          SMTP 服务器地址，填写 `SMTP_SERVER` 例: `smtp.example.com`，必填          |
+|  _**SMTP_PORT**_   | 端口，默认 `465`；`465` 走 SSL 直连，`587`（及其他端口）走 STARTTLS，必填或留空用默认 |
+|   _**SMTP_SSL**_   |        强制指定是否使用 SSL：`true` / `false`，留空按端口自动选择（可选）        |
+|  _**SMTP_USER**_   |                          发件账号（SMTP 登录用户名），必填                          |
+|_**SMTP_PASSWORD**_ |                          SMTP 登录密码或邮箱授权码，必填                          |
+|   _**SMTP_TO**_    |    收件人地址，多个用英文逗号分隔（可选），留空发给发件账号 `SMTP_USER`    |
+|  _**MERGE_PUSH**_  |                         **true**: 将推送消息合并；**false**: 分开推送                          |
+
+<Callout type="warning" emoji="⚠️">
+  需 `SMTP_SERVER`、`SMTP_USER`、`SMTP_PASSWORD` 三者齐备才会启用；邮件为纯文本，标题「签到通知」。非 SSL 端口固定走 STARTTLS，不支持明文 25 端口中继。
+</Callout>

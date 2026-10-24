@@ -1,0 +1,113 @@
+import { Cards, Card } from 'nextra/components'
+import { Callout } from 'nextra/components'
+
+<Cards>
+  <Card
+    title="BARK"
+    href="/settings/notify/bark"
+  />
+  <Card
+    title="CoolPush"
+    href="/settings/notify/coolpush"
+  />
+  <Card
+    title="钉钉"
+    href="/settings/notify/dingtalk"
+  />
+  <Card
+    title="飞书"
+    href="/settings/notify/feishu"
+  />
+  <Card
+    title="PushPlus"
+    href="/settings/notify/pushplus"
+  />
+  <Card
+    title="Qmsg 酱"
+    href="/settings/notify/qmsg"
+  />
+  <Card
+    title="企业微信应用消息"
+    href="/settings/notify/qywx"
+  />
+  <Card
+    title="企业微信群机器人"
+    href="/settings/notify/qywxrobot"
+  />
+  <Card
+    title="Server 酱"
+    href="/settings/notify/server"
+  />
+  <Card
+    title="Telegram"
+    href="/settings/notify/telegram"
+  />
+  <Card
+    title="Server 酱 TURBO"
+    href="/settings/notify/turbo"
+  />
+  <Card
+    title="Ntfy"
+    href="/settings/notify/ntfy"
+  />
+  <Card
+    title="Gotify"
+    href="/settings/notify/gotify"
+  />
+  <Card
+    title="Wpush"
+    href="/settings/notify/wpush"
+  />
+  <Card
+    title="Xxtui"
+    href="/settings/notify/xxtui"
+  />
+  <Card
+    title="自定义 Webhook"
+    href="/settings/notify/webhook"
+  />
+  <Card
+    title="PushMe"
+    href="/settings/notify/pushme"
+  />
+  <Card
+    title="青龙 QLAPI"
+    href="/settings/notify/qlapi"
+  />
+  <Card
+    title="SMTP 邮件"
+    href="/settings/notify/smtp"
+  />
+  <Card
+    title="PushDeer"
+    href="/settings/notify/pushdeer"
+  />
+  <Card
+    title="wxPusher"
+    href="/settings/notify/wxpusher"
+  />
+</Cards>
+
+# 青龙 QLAPI
+
+<Callout type="info">
+  复用青龙面板已配置的通知渠道。程序通过青龙注入的 `QLAPI.systemNotify` 发送通知，无需在 `config.json` 重复填写其他通知参数。
+</Callout>
+
+### 配置示例
+
+```json filename="config.json" copy
+{
+  "QLAPI": "",
+  "MERGE_PUSH": ""
+}
+```
+
+|      参数       |                                说明                                 |
+| :-------------: | :------------------------------------------------------------------: |
+|  _**QLAPI**_   | 非空即启用（建议填 `true`），仅在青龙面板环境生效，走青龙的 `systemNotify` 推送 |
+| _**MERGE_PUSH**_ |                 **true**: 将推送消息合并；**false**: 分开推送                 |
+
+<Callout type="warning" emoji="⚠️">
+  Docker、本地等其他环境检测不到 `QLAPI` 时会自动跳过该渠道（打印「未检测到青龙 QLAPI 环境，跳过」），不算错误。
+</Callout>

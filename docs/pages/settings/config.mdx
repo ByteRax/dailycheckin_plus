@@ -59,6 +59,20 @@ import CardList from '../../components/CardList'
   "WPUSH_CHANNEL": "",
   "WPUSH_TOPIC_CODE": "",
   "XXTUI_KEY": "",
+  "WEBHOOK_URL": "",
+  "WEBHOOK_METHOD": "POST",
+  "WEBHOOK_BODY": "{\"title\": \"{title}\", \"content\": \"{content}\"}",
+  "PUSHME_KEY": "",
+  "QLAPI": "",
+  "SMTP_SERVER": "",
+  "SMTP_PORT": "465",
+  "SMTP_SSL": "",
+  "SMTP_USER": "",
+  "SMTP_PASSWORD": "",
+  "SMTP_TO": "",
+  "PUSHDEER_PUSHKEY": "",
+  "WXPUSHER_APPTOKEN": "",
+  "WXPUSHER_UIDS": "",
   "MERGE_PUSH": "",
   "ACFUN": [
     {
@@ -241,6 +255,20 @@ import CardList from '../../components/CardList'
 | _**WPUSH_CHANNEL**_ | WPUSH 推送渠道，不填默认 `wechat` |
 | _**WPUSH_TOPIC_CODE**_ | WPUSH Topic 广播编码（可选） |
 | _**XXTUI_KEY**_ | xxtui 推送 Key（xxtui.com） |
+| _**WEBHOOK_URL**_ | 自定义 Webhook 推送地址，可接入 MeoW、Synology Chat 等任意 webhook 服务 |
+| _**WEBHOOK_METHOD**_ | Webhook 请求方法 `POST` / `GET`，默认 `POST`；`GET` 时 `title` / `content` 走 query 参数 |
+| _**WEBHOOK_BODY**_ | Webhook `POST` 请求体的 JSON 模板，支持 `{title}` `{content}` 占位符 |
+| _**PUSHME_KEY**_ | PushMe 推送 Key（push.i-i.me） |
+| _**QLAPI**_ | 青龙 QLAPI 通知桥开关，非空即启用（建议填 `true`），仅青龙环境生效 |
+| _**SMTP_SERVER**_ | SMTP 邮件服务器地址 |
+| _**SMTP_PORT**_ | SMTP 端口，默认 `465`；`465` 走 SSL，`587` 等走 STARTTLS |
+| _**SMTP_SSL**_ | 强制指定是否 SSL（`true` / `false`），留空按端口自动选择 |
+| _**SMTP_USER**_ | SMTP 发件账号（登录用户名） |
+| _**SMTP_PASSWORD**_ | SMTP 登录密码或授权码 |
+| _**SMTP_TO**_ | 收件人地址，多个用英文逗号分隔，留空发给发件账号 |
+| _**PUSHDEER_PUSHKEY**_ | PushDeer 推送 Key（pushdeer.com） |
+| _**WXPUSHER_APPTOKEN**_ | wxPusher 应用 appToken（wxpusher.zjiecode.com） |
+| _**WXPUSHER_UIDS**_ | wxPusher 用户 UID，多个用英文逗号分隔 |
 
 <Callout
   type="warning"
@@ -324,6 +352,30 @@ import CardList from '../../components/CardList'
   <Card
     title="Xxtui"
     href="/settings/notify/xxtui"
+  />
+  <Card
+    title="自定义 Webhook"
+    href="/settings/notify/webhook"
+  />
+  <Card
+    title="PushMe"
+    href="/settings/notify/pushme"
+  />
+  <Card
+    title="青龙 QLAPI"
+    href="/settings/notify/qlapi"
+  />
+  <Card
+    title="SMTP 邮件"
+    href="/settings/notify/smtp"
+  />
+  <Card
+    title="PushDeer"
+    href="/settings/notify/pushdeer"
+  />
+  <Card
+    title="wxPusher"
+    href="/settings/notify/wxpusher"
   />
 </Cards>
 
