@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import requests
 
@@ -65,7 +65,7 @@ def check_config(task_list):
 
 def checkin():
     start_time = time.time()
-    utc_time = (datetime.utcnow() + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
+    utc_time = (datetime.now(timezone.utc) + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
     print(f"当前时间: {utc_time}\n当前版本: {__version__}")
     args = parse_arguments()
     include = args.include
