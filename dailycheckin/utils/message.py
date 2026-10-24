@@ -44,13 +44,18 @@ def message2coolpush(
         requests.post(url=f"https://push.xuthus.cc/email/{coolpushskey}", params=params, timeout=10)
 
 
-def message2qmsg(qmsg_key, qmsg_type, content):
+def message2qmsg(qmsg_key, qmsg_type, content, qq=None, bot=None, qmsg_url=None):
     print("qmsg 酱推送开始")
     params = {"msg": content}
+    if qq:
+        params["qq"] = qq
+    if bot:
+        params["bot"] = bot
+    base_url = (qmsg_url or "https://qmsg.zendee.cn").rstrip("/")
     if qmsg_type == "group":
-        requests.get(url=f"https://qmsg.zendee.cn/group/{qmsg_key}", params=params, timeout=10)
+        requests.get(url=f"{base_url}/group/{qmsg_key}", params=params, timeout=10)
     else:
-        requests.get(url=f"https://qmsg.zendee.cn/send/{qmsg_key}", params=params, timeout=10)
+        requests.get(url=f"{base_url}/send/{qmsg_key}", params=params, timeout=10)
 
 
 def message2telegram(tg_api_host, tg_proxy, tg_bot_token, tg_user_id, content):
@@ -284,6 +289,9 @@ def push_message(content_list: list, notice_info: dict):
     sendkey = notice_info.get("sendkey")
     qmsg_key = notice_info.get("qmsg_key")
     qmsg_type = notice_info.get("qmsg_type")
+    qmsg_qq = notice_info.get("qmsg_qq")
+    qmsg_bot = notice_info.get("qmsg_bot")
+    qmsg_url = notice_info.get("qmsg_url")
     tg_bot_token = notice_info.get("tg_bot_token")
     tg_user_id = notice_info.get("tg_user_id")
     tg_api_host = notice_info.get("tg_api_host")
@@ -343,7 +351,14 @@ def push_message(content_list: list, notice_info: dict):
     for message in message_list:
         if qmsg_key:
             try:
-                message2qmsg(qmsg_key=qmsg_key, qmsg_type=qmsg_type, content=message)
+                message2qmsg(
+                    qmsg_key=qmsg_key,
+                    qmsg_type=qmsg_type,
+                    content=message,
+                    qq=qmsg_qq,
+                    bot=qmsg_bot,
+                    qmsg_url=qmsg_url,
+                )
             except Exception as e:
                 print("qmsg 推送失败", e)
         if coolpushskey:

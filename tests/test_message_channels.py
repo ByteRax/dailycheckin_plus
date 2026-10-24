@@ -182,3 +182,49 @@ def test_push_message_dispatches_xxtui_with_merge_split(monkeypatch):
     # 仅配置 xxtui 时 merge_push 默认拆分（原 PR 564 漏补的默认集合成员）
     message.push_message(["a", "b"], {"xxtui_key": "k"})
     assert sent == [{"xxtui_key": "k", "content": "a"}, {"xxtui_key": "k", "content": "b"}]
+
+
+# ---------------------------------------------------------------------------
+# qmsg（Sitoi/dailycheckin#566 #453）
+# ---------------------------------------------------------------------------
+
+
+def test_qmsg_default_url_and_params(fake_http):
+    message.message2qmsg("qkey", None, "hello")
+    (call,) = fake_http.calls
+    assert call["method"] == "GET"
+    assert call["url"] == "https://qmsg.zendee.cn/send/qkey"
+    assert call["params"] == {"msg": "hello"}
+    assert call["timeout"] == 10
+
+
+def test_qmsg_group_type_uses_group_endpoint(fake_http):
+    message.message2qmsg("qkey", "group", "hello")
+    assert fake_http.calls[0]["url"] == "https://qmsg.zendee.cn/group/qkey"
+
+
+def test_qmsg_custom_url_with_qq_and_bot(fake_http):
+    message.message2qmsg("qkey", None, "hello", qq="10001", bot="true", qmsg_url="https://qmsg.example.com/")
+    (call,) = fake_http.calls
+    assert call["url"] == "https://qmsg.example.com/send/qkey"
+    assert call["params"] == {"msg": "hello", "qq": "10001", "bot": "true"}
+
+
+def test_push_message_passes_qmsg_options(monkeypatch):
+    monkeypatch.setattr(message, "important_notice", lambda: None)
+    sent = []
+    monkeypatch.setattr(message, "message2qmsg", lambda **kw: sent.append(kw))
+    message.push_message(
+        ["a"],
+        {"qmsg_key": "k", "qmsg_qq": "10001", "qmsg_bot": "true", "qmsg_url": "https://qmsg.example.com"},
+    )
+    assert sent == [
+        {
+            "qmsg_key": "k",
+            "qmsg_type": None,
+            "content": "a",
+            "qq": "10001",
+            "bot": "true",
+            "qmsg_url": "https://qmsg.example.com",
+        }
+    ]
