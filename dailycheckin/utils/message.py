@@ -14,22 +14,55 @@ from urllib.parse import parse_qsl, quote_plus, urlencode, urlsplit, urlunsplit
 import requests
 
 
+def _serverchan_send(url, data):
+    # Server 酱统一发送 + 成败判定：Turbo/Server酱³ 返回 body code==0（官方 SDK 一致，
+    # 见 https://github.com/easychen/serverchan-sdk）；旧版 sc.ftqq.com 返回 errno==0。
+    response = requests.post(url=url, data=data, timeout=10)
+    try:
+        result = response.json()
+    except Exception:
+        print(f"Server 酱推送失败！HTTP {response.status_code} 响应解析失败")
+        return
+    if isinstance(result, dict):
+        code = result["code"] if "code" in result else result.get("errno")
+        detail = result.get("message") or result.get("errmsg")
+    else:
+        code, detail = None, result
+    if code == 0 and not isinstance(code, bool):
+        print("Server 酱推送成功！")
+    else:
+        print(f"Server 酱推送失败！{detail or result}")
+
+
 def message2server(sckey, content):
+    desp = content.replace("\n", "\n\n")
+    if re.match(r"^sctp\d+t", sckey):
+        # Server酱³ SendKey 误填进 SCKEY：与 SENDKEY 渠道同路由到 ft07 端点
+        message2server_turbo(sendkey=sckey, content=content)
+        return
+    if sckey.startswith("SCT"):
+        # Server酱·Turbo SendKey（SCT 前缀）误填进 SCKEY：走 sctapi.ftqq.com
+        print("server 酱 Turbo 推送开始")
+        _serverchan_send(url=f"https://sctapi.ftqq.com/{sckey}.send", data={"title": "每日签到", "desp": desp})
+        return
     print("server 酱推送开始")
-    data = {"text": "每日签到", "desp": content.replace("\n", "\n\n")}
-    requests.post(url=f"https://sc.ftqq.com/{sckey}.send", data=data, timeout=10)
+    _serverchan_send(url=f"https://sc.ftqq.com/{sckey}.send", data={"text": "每日签到", "desp": desp})
 
 
 def message2server_turbo(sendkey, content):
-    data = {"text": "每日签到", "desp": content.replace("\n", "\n\n")}
+    desp = content.replace("\n", "\n\n")
     if match := re.match(r"^sctp(\d+)t", sendkey):
         sc3uid = match.group(1)
         print("Server 酱³ 推送开始")
-        url = f"https://{sc3uid}.push.ft07.com/send/{sendkey}.send?tags=DailyCheckin"
+        # 官方路由同 easychen/serverchan-sdk：sctp<uid>t 前缀 → uid.push.ft07.com；
+        # tags 为 SC³ 专用参数（官方 API 文档），随 form body 发送
+        _serverchan_send(
+            url=f"https://{sc3uid}.push.ft07.com/send/{sendkey}.send",
+            data={"title": "每日签到", "desp": desp, "tags": "DailyCheckin"},
+        )
     else:
         print("server 酱 Turbo 推送开始")
-        url = f"https://sctapi.ftqq.com/{sendkey}.send"
-    requests.post(url=url, data=data, timeout=10)
+        _serverchan_send(url=f"https://sctapi.ftqq.com/{sendkey}.send", data={"title": "每日签到", "desp": desp})
 
 
 def message2coolpush(
@@ -515,6 +548,8 @@ def push_message(content_list: list, notice_info: dict):
             or pushdeer_pushkey
             or wxpusher_apptoken
             or (gotify_url and gotify_token)
+            or sckey
+            or sendkey
         ):
             merge_push = False
         else:
