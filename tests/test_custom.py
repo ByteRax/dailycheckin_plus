@@ -206,11 +206,9 @@ class TestNaming:
 
 def test_request_exception_shows_url_without_query():
     # 请求异常回显去掉 query（?token=… 不外泄）且不带异常原文（A09 L-5）
-    import responses as responses_mod
-
     obj = Custom(check_item={"url": "https://example.com/api?token=SECRET123", "success": "ok"})
-    with responses_mod.RequestsMock() as rs:
-        rs.add(responses_mod.GET, "https://example.com/api", body=requests.ConnectionError("connect error boom"))
+    with responses.RequestsMock() as rs:
+        rs.add(responses.GET, "https://example.com/api", body=requests.ConnectionError("connect error boom"))
         result = obj.main()
     assert "SECRET123" not in result
     assert "token" not in result
