@@ -293,3 +293,17 @@ def test_bark_network_exception_log_masks_url(monkeypatch, capsys):
     message.message2bark(key_url, "hello")
     out = capsys.readouterr().out
     assert "SECRETBARKKEY123" not in out
+
+
+def test_important_notice_silent_on_non_200(monkeypatch, capsys):
+    # 通知拉取遇限流/非 200 应静默返回 None，不打印失败日志（真机观察：GitHub 匿名限流）
+    class FakeResp:
+        status_code = 403
+
+        @staticmethod
+        def json():
+            raise ValueError("rate limited body")
+
+    monkeypatch.setattr(message.requests, "get", lambda **kw: FakeResp())
+    assert message.important_notice() is None
+    assert "失败" not in capsys.readouterr().out

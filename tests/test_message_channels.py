@@ -281,6 +281,8 @@ def test_important_notice_reads_fork_repo(monkeypatch):
     captured = {}
 
     class FakeResp:
+        status_code = 200
+
         def json(self):
             return []
 

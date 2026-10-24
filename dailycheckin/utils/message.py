@@ -521,11 +521,15 @@ def message2wxpusher(wxpusher_apptoken: str, wxpusher_uids, content: str) -> Non
 
 
 def important_notice():
-    # fork 版：重要通知改为读取本 fork 仓库带「通知」标签的开放 issue（原实现指向上游仓库）
-    datas = requests.get(
+    # fork 版：重要通知改为读取本 fork 仓库带「通知」标签的开放 issue（原实现指向上游仓库）。
+    # 通知只是可选附加信息：非 200（如 API 限流）时静默跳过，不打失败日志
+    response = requests.get(
         url="https://api.github.com/repos/ByteRax/dailycheckin_plus/issues?state=open&labels=通知",
         timeout=10,
-    ).json()
+    )
+    if response.status_code != 200:
+        return None
+    datas = response.json()
     if datas:
         data = datas[0]
         title = data.get("title")
