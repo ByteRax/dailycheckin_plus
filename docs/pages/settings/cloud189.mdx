@@ -1,0 +1,36 @@
+import { Callout } from 'nextra/components'
+import { Steps } from 'nextra/components'
+import CardList from '../../components/CardList'
+
+<CardList />
+
+# 天翼云盘
+
+### 配置示例
+
+```json filename="config.json" copy
+{
+  "CLOUD189": [
+    {
+      "username": "天翼云盘手机号",
+      "password": "天翼云盘密码"
+    },
+    {
+      "username": "多账号填写，请参考上面",
+      "password": "多账号填写，请参考上面"
+    }
+  ]
+}
+```
+
+### 配置说明
+
+|  _**username**_  | 天翼云盘账号（手机号） |
+|  _**password**_  | 天翼云盘密码 |
+
+每日签到领取空间奖励（Refs: Sitoi/dailycheckin#481）。密码仅用于登录，不会出现在日志与通知中。
+
+### 说明
+
+- 多账号即多个站点/账号，逐个独立执行，单个失败不影响其他。
+- 当前为离线验证（mock 回归）状态，首次使用请观察一次真实结果反馈。

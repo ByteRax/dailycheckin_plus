@@ -101,6 +101,12 @@
             "cookie": "多账号 cookie 填写，请参考上面，cookie 以实际获取为准（遇到特殊字符如双引号\" 请加反斜杠转义）"
         }
     ],
+    "CLOUD189": [
+        {
+            "username": "天翼云盘手机号",
+            "password": "天翼云盘密码"
+        }
+    ],
     "BILIBILI": [
         {
             "coin_num": 0,
@@ -202,6 +208,11 @@
         },
         {
             "cookie": "多账号 cookie 填写，请参考上面，cookie 以实际获取为准（遇到特殊字符如双引号\" 请加反斜杠转义）"
+        }
+    ],
+    "XIMALAYA": [
+        {
+            "cookie": "1&_token=xxxxxx; _xmLog=xxxxxx; xlsx_xid=xxxxxx;"
         }
     ],
     "V2EX": [

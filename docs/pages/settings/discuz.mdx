@@ -1,0 +1,38 @@
+import { Callout } from 'nextra/components'
+import { Steps } from 'nextra/components'
+import CardList from '../../components/CardList'
+
+<CardList />
+
+# 通用 Discuz 论坛
+
+### 配置示例
+
+```json filename="config.json" copy
+{
+  "DISCUZ": [
+    {
+      "url": "https://bbs.example.com",
+      "cookie": "xxx_auth=xxxxxx; xxx_saltkey=xxxxxx",
+      "sign_plugin": "dsu_paulsign:sign"
+    },
+    {
+      "url": "论坛地址",
+      "cookie": "多账号 cookie 填写，请参考上面，cookie 以实际获取为准"
+    }
+  ]
+}
+```
+
+### 配置说明
+
+|    _**url**_     | 论坛首页地址 |
+|    _**cookie**_  | 论坛登录 Cookie（关键：`*_auth` 与 `*_saltkey`） |
+| _**sign_plugin**_ | 签到插件 id（可选），Discuz 常用 `dsu_paulsign:sign`；单段插件（如飞牛 `zqlj_sign`）填单段即可 |
+
+适用 Discuz X 系论坛的自定义签到（Refs: Sitoi/dailycheckin#576 #556 #549）。
+
+### 说明
+
+- 多账号即多个站点/账号，逐个独立执行，单个失败不影响其他。
+- 当前为离线验证（mock 回归）状态，首次使用请观察一次真实结果反馈。

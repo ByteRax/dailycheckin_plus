@@ -78,12 +78,15 @@ pip install "dailycheckin @ git+https://github.com/ByteRax/dailycheckin_plus@mai
 | 🟢️  | ALIYUN    | [阿里云盘](https://www.aliyundrive.com/drive/)             | 24.02.20 | 签到获取免费会员和空间                                                       |
 | 🟢️  | ENSHAN    | [恩山无线论坛](https://www.right.com.cn/forum/)            | 24.02.20 | 签到获取硬币和积分                                                           |
 | 🟢️  | FNNASCLUB | [飞牛 Nas](https://club.fnnas.com/)                        | 25.12.09 | 签到奖励                                                                     |
+| 🟡   | DISCUZ    | 通用 Discuz 论坛                                            | fork 新增 | 自定义论坛签到（#576 #556 #549）                                            |
+| 🟡   | XIMALAYA  | [喜马拉雅](https://www.ximalaya.com/)                      | fork 新增 | 每日签到（#452）                                                             |
+| 🟡   | CLOUD189  | [天翼云盘](https://cloud.189.cn/)                          | fork 新增 | 每日签到领取空间奖励（#481）                                                 |
 | 🟢️  | AOLAXING  | [奥拉星](http://www.100bt.com/m/creditMall/?gameId=2#task) | 24.02.20 | 签到获取积分                                                                 |
 | 🟢️  | IMAOTAI   | i 茅台                                                     | 25.09.28 | 申购生肖茅台                                                                 |
 | 🟤   | MIMOTION  | 小米运动                                                   | 25.09.28 | 每日小米运动刷步数                                                           |
 | 🟢️  | BAIDU     | [百度站点](https://ziyuan.baidu.com/site/index#/)          | 25.09.28 | 提交网站页面供百度收录                                                       |
 
-> 检查日期沿用上游最后一次实测记录；本 fork 修复的服务见下方「与上游差异」。
+> 检查日期沿用上游最后一次实测记录；本 fork 修复的服务见下方「与上游差异」。🟡 = 本 fork 新增服务：离线 mock 回归验证通过，待真实账号实测后再标 🟢️。
 
 ## 💬 通知列表
 

@@ -1,0 +1,33 @@
+import { Callout } from 'nextra/components'
+import { Steps } from 'nextra/components'
+import CardList from '../../components/CardList'
+
+<CardList />
+
+# 喜马拉雅
+
+### 配置示例
+
+```json filename="config.json" copy
+{
+  "XIMALAYA": [
+    {
+      "cookie": "1&_token=xxxxxx; _xmLog=xxxxxx; xlsx_xid=xxxxxx;"
+    },
+    {
+      "cookie": "多账号 cookie 填写，请参考上面，cookie 以实际获取为准"
+    }
+  ]
+}
+```
+
+### 配置说明
+
+| _**cookie**_ | 喜马拉雅网页 Cookie（需含 `1&_token` 等登录态） |
+
+每日签到领取积分（Refs: Sitoi/dailycheckin#452）。
+
+### 说明
+
+- 多账号即多个站点/账号，逐个独立执行，单个失败不影响其他。
+- 当前为离线验证（mock 回归）状态，首次使用请观察一次真实结果反馈。
