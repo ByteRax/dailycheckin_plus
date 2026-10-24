@@ -105,3 +105,47 @@ def test_sign_normal_path_still_works():
     assert names["帐号信息"] == "tom"
     assert names["帐号余额"] == "12.34"
     assert names["签到天数"] == "连续登录 5 天"
+
+
+def test_sign_requests_keep_tls_verification():
+    # Refs: 安全审查 A09 H-2（2026-10-24）
+    # www.v2ex.com 证书链校验通过（无凭据探测 302/200），全部请求移除 verify=False，
+    # A2 会话 Cookie 不再接受中间人证书
+    class RecordingSession(SequentialFakeSession):
+        def __init__(self, sequence):
+            super().__init__(sequence)
+            self.get_kwargs = []
+
+        def get(self, url=None, **kwargs):
+            self.get_kwargs.append(kwargs)
+            return super().get(url=url, **kwargs)
+
+    session = RecordingSession(
+        [
+            ("/mission/daily", MISSION_PAGE_WITH_BUTTON),
+            ("/once?", ""),
+            ("/balance", BALANCE_PAGE),
+            ("/mission/daily", MISSION_PAGE_DAYS),
+        ]
+    )
+    V2ex.sign(session=session)
+    assert session.get_kwargs, "应发出至少一个请求"
+    for kwargs in session.get_kwargs:
+        assert kwargs.get("verify", True) is not False, "不得再传 verify=False"
+
+
+def test_module_does_not_disable_warnings(monkeypatch):
+    # Refs: 安全审查 A09 H-2（2026-10-24）
+    # 模块导入不得调用 urllib3.disable_warnings()（进程级静默 InsecureRequestWarning）
+    import importlib
+
+    import urllib3
+
+    calls = []
+    monkeypatch.setattr(urllib3, "disable_warnings", lambda *a, **k: calls.append(a))
+    importlib.reload(v2ex_module)
+    try:
+        assert calls == [], "模块导入不应调用 urllib3.disable_warnings()"
+    finally:
+        monkeypatch.undo()
+        importlib.reload(v2ex_module)

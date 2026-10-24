@@ -126,7 +126,8 @@ class BiliBili(CheckIn):
         cid int 视频cid号
         progres int 观看秒数
         """
-        url = "http://api.bilibili.com/x/v2/history/report"
+        # 携 csrf(bili_jct)+SESSDATA，https 探测 200+证书校验通过、响应与 http 基线一致（Refs: 安全审查 A09 H-3）
+        url = "https://api.bilibili.com/x/v2/history/report"
         post_data = {"aid": aid, "cid": cid, "progres": progres, "csrf": bili_jct}
         ret = session.post(url=url, data=post_data).json()
         return ret

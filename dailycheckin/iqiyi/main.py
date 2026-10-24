@@ -32,7 +32,8 @@ class IQIYI(CheckIn):
         账号信息查询
         """
         time.sleep(3)
-        url = "http://serv.vip.iqiyi.com/vipgrowth/query.action"
+        # P00001 令牌随 URL 传输，必须走 https（Refs: 安全审查 A09 H-3）
+        url = "https://serv.vip.iqiyi.com/vipgrowth/query.action"
         params = {"P00001": p00001}
         res = requests.get(url=url, params=params).json()
         if res["code"] == "A00000":

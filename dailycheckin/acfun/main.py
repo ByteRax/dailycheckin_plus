@@ -3,11 +3,8 @@ import os
 import re
 
 import requests
-import urllib3
 
 from dailycheckin import CheckIn
-
-urllib3.disable_warnings()
 
 
 class AcFun(CheckIn):
@@ -37,7 +34,8 @@ class AcFun(CheckIn):
             "content-type": "application/x-www-form-urlencoded",
         }
         data = f"password={password}&username={phone}"
-        response = session.post(url=url, data=data, headers=headers, verify=False)
+        # 证书校验通过（无凭据探测 200），不再 verify=False 接受中间人证书（Refs: 安全审查 A09 H-2）
+        response = session.post(url=url, data=data, headers=headers)
         acpasstoken = response.json().get("acPassToken")
         auth_key = str(response.json().get("auth_key"))
         if acpasstoken and auth_key:
@@ -115,7 +113,8 @@ class AcFun(CheckIn):
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
         }
-        response = session.get(url=url, headers=headers, cookies=cookies, verify=False)
+        # 证书校验通过（无凭据探测 401 token error），不再 verify=False（Refs: 安全审查 A09 H-2）
+        response = session.get(url=url, headers=headers, cookies=cookies)
         if response.json().get("result") == 0:
             msg = "分享成功"
         else:

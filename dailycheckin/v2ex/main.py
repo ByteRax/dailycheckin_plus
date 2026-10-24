@@ -3,11 +3,8 @@ import os
 import re
 
 import requests
-import urllib3
 
 from dailycheckin import CheckIn
-
-urllib3.disable_warnings()
 
 
 class V2ex(CheckIn):
@@ -19,7 +16,8 @@ class V2ex(CheckIn):
     @staticmethod
     def sign(session):
         msg = []
-        response = session.get(url="https://www.v2ex.com/mission/daily", verify=False)
+        # www.v2ex.com 证书链校验通过（无凭据探测 302），全部请求移除 verify=False（Refs: 安全审查 A09 H-2）
+        response = session.get(url="https://www.v2ex.com/mission/daily")
         pattern = (
             r"<input type=\"button\" class=\"super normal button\""
             r" value=\".*?\" onclick=\"location\.href = \'(.*?)\';\" />"
@@ -35,11 +33,10 @@ class V2ex(CheckIn):
             data = {"once": url.split("=")[-1]}
             _ = session.get(
                 url="https://www.v2ex.com" + url,
-                verify=False,
                 headers=headers,
                 params=data,
             )
-        response = session.get(url="https://www.v2ex.com/balance", verify=False)
+        response = session.get(url="https://www.v2ex.com/balance")
         total = re.findall(
             pattern=r"<td class=\"d\" style=\"text-align: right;\">(\d+\.\d+)</td>",
             string=response.text,
@@ -60,7 +57,7 @@ class V2ex(CheckIn):
             {"name": "今日签到", "value": today},
             {"name": "帐号余额", "value": total},
         ]
-        response = session.get(url="https://www.v2ex.com/mission/daily", verify=False)
+        response = session.get(url="https://www.v2ex.com/mission/daily")
         data = re.findall(pattern=r"<div class=\"cell\">(.*?)天</div>", string=response.text)
         data = data[0] + "天" if data else "获取连续签到天数失败"
         msg += [
