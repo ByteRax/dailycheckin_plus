@@ -69,6 +69,8 @@ notice_map = {
     "SMTP_PASSWORD": "",
     "SMTP_TO": "",
     "PUSHDEER_PUSHKEY": "",
+    "WXPUSHER_APPTOKEN": "",
+    "WXPUSHER_UIDS": "",
 }
 
 

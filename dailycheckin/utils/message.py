@@ -388,6 +388,30 @@ def message2pushdeer(pushdeer_pushkey: str, content: str) -> None:
         print(f"PushDeer 推送失败！{result.get('error') or result}")
 
 
+def message2wxpusher(wxpusher_apptoken: str, wxpusher_uids, content: str) -> None:
+    print("wxPusher 推送开始")
+    if isinstance(wxpusher_uids, (list, tuple)):
+        uids = [str(uid).strip() for uid in wxpusher_uids if str(uid).strip()]
+    else:
+        uids = [uid.strip() for uid in str(wxpusher_uids or "").split(",") if uid.strip()]
+    response = requests.post(
+        url="https://wxpusher.zjiecode.com/api/send/message",
+        json={"appToken": wxpusher_apptoken, "content": content, "contentType": 1, "uids": uids},
+        timeout=10,
+    )
+    try:
+        result = response.json()
+    except Exception:
+        print("wxPusher 推送失败！响应解析失败")
+        return
+    # 成败按响应 body 的 code 判定：wxPusher 错误以 HTTP 200 + code!=0 返回
+    code = result.get("code") if isinstance(result, dict) else None
+    if code == 0 and not isinstance(code, bool):
+        print("wxPusher 推送成功！")
+    else:
+        print(f"wxPusher 推送失败！错误信息：{result.get('msg') or result}")
+
+
 def important_notice():
     # fork 版：重要通知改为读取本 fork 仓库带「通知」标签的开放 issue（原实现指向上游仓库）
     datas = requests.get(
@@ -458,6 +482,8 @@ def push_message(content_list: list, notice_info: dict):
     smtp_password = notice_info.get("smtp_password")
     smtp_to = notice_info.get("smtp_to")
     pushdeer_pushkey = notice_info.get("pushdeer_pushkey")
+    wxpusher_apptoken = notice_info.get("wxpusher_apptoken")
+    wxpusher_uids = notice_info.get("wxpusher_uids")
     content_str = "\n————————————\n\n".join(content_list)
     merge_push = notice_info.get("merge_push")
     message_list = [content_str]
@@ -485,6 +511,7 @@ def push_message(content_list: list, notice_info: dict):
             or qlapi
             or (smtp_server and smtp_user and smtp_password)
             or pushdeer_pushkey
+            or wxpusher_apptoken
             or (gotify_url and gotify_token)
         ):
             merge_push = False
@@ -659,6 +686,15 @@ def push_message(content_list: list, notice_info: dict):
                 message2pushdeer(pushdeer_pushkey=pushdeer_pushkey, content=message)
             except Exception as e:
                 print("PushDeer 推送失败", e)
+        if wxpusher_apptoken and wxpusher_uids:
+            try:
+                message2wxpusher(
+                    wxpusher_apptoken=wxpusher_apptoken,
+                    wxpusher_uids=wxpusher_uids,
+                    content=message,
+                )
+            except Exception as e:
+                print("wxPusher 推送失败", e)
 
 
 if __name__ == "__main__":

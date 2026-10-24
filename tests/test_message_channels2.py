@@ -362,3 +362,55 @@ def test_push_message_dispatches_pushdeer_with_merge_split(monkeypatch):
     # 仅配置 pushdeer 时 merge_push 默认拆分（pushdeer_pushkey 在默认集合中），两条内容各推一次
     message.push_message(["a", "b"], {"pushdeer_pushkey": "k"})
     assert sent == [{"pushdeer_pushkey": "k", "content": "a"}, {"pushdeer_pushkey": "k", "content": "b"}]
+
+
+# ---------------------------------------------------------------------------
+# wxPusher（重实现自 PR #366，未复用其代码）
+# ---------------------------------------------------------------------------
+
+
+def test_wxpusher_payload_uids_from_comma_string(fake_http, capsys):
+    message.message2wxpusher("AT_appToken", "uid_1,uid_2", "签到结果内容")
+    (call,) = fake_http.calls
+    assert call["method"] == "POST"
+    assert call["url"] == "https://wxpusher.zjiecode.com/api/send/message"
+    assert call["json"] == {
+        "appToken": "AT_appToken",
+        "content": "签到结果内容",
+        "contentType": 1,
+        "uids": ["uid_1", "uid_2"],
+    }
+    assert call["timeout"] == 10
+    assert "wxPusher 推送成功" in capsys.readouterr().out
+
+
+def test_wxpusher_accepts_uid_list_directly(fake_http):
+    message.message2wxpusher("AT_appToken", ["uid_1", " uid_2 "], "hello")
+    assert fake_http.calls[0]["json"]["uids"] == ["uid_1", "uid_2"]
+
+
+def test_wxpusher_body_code_nonzero_is_failure(fake_http, capsys):
+    fake_http.response = FakeResponse(status_code=200, json_data={"code": 1001, "msg": "appToken 不合法"})
+    message.message2wxpusher("bad-token", "uid_1", "hello")
+    out = capsys.readouterr().out
+    assert "wxPusher 推送失败" in out
+    assert "appToken 不合法" in out
+    assert "wxPusher 推送成功" not in out
+
+
+def test_wxpusher_non_json_body_reports_failure(fake_http, capsys):
+    fake_http.response = FakeResponse(status_code=200, json_data=None, text="<html>error</html>")
+    message.message2wxpusher("AT_appToken", "uid_1", "hello")
+    assert "wxPusher 推送失败" in capsys.readouterr().out
+
+
+def test_push_message_dispatches_wxpusher_with_merge_split(monkeypatch):
+    monkeypatch.setattr(message, "important_notice", lambda: None)
+    sent = []
+    monkeypatch.setattr(message, "message2wxpusher", lambda **kw: sent.append(kw))
+    # 仅配置 wxpusher 时 merge_push 默认拆分（wxpusher_apptoken 在默认集合中），两条内容各推一次
+    message.push_message(["a", "b"], {"wxpusher_apptoken": "tk", "wxpusher_uids": "u1,u2"})
+    assert sent == [
+        {"wxpusher_apptoken": "tk", "wxpusher_uids": "u1,u2", "content": "a"},
+        {"wxpusher_apptoken": "tk", "wxpusher_uids": "u1,u2", "content": "b"},
+    ]
