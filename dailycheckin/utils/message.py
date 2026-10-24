@@ -4,7 +4,10 @@ import hashlib
 import hmac
 import json
 import re
+import smtplib
 import time
+from email.header import Header
+from email.mime.text import MIMEText
 from urllib.parse import parse_qsl, quote_plus, urlencode, urlsplit, urlunsplit
 
 import requests
@@ -320,6 +323,51 @@ def message2qlapi(content: str) -> None:
     print("青龙 QLAPI 推送成功！")
 
 
+def _smtp_use_ssl(smtp_ssl, port: int) -> bool:
+    # 未配置 smtp_ssl 时按端口自动选：465 走 SSL，其余（587 等）走 STARTTLS；
+    # 配置了 smtp_ssl 则以它为准（接受 bool 或 "true"/"false" 字符串）。
+    if smtp_ssl is None or smtp_ssl == "":
+        return port == 465
+    if isinstance(smtp_ssl, bool):
+        return smtp_ssl
+    return str(smtp_ssl).strip().lower() in ("true", "1", "yes", "on")
+
+
+def message2smtp(
+    smtp_server: str,
+    smtp_user: str,
+    smtp_password: str,
+    content: str,
+    smtp_port=None,
+    smtp_ssl=None,
+    smtp_to=None,
+) -> None:
+    print("SMTP 邮件推送开始")
+    try:
+        port = int(smtp_port) if smtp_port else 465
+    except (TypeError, ValueError):
+        port = 465
+    use_ssl = _smtp_use_ssl(smtp_ssl, port)
+    recipients = [addr.strip() for addr in str(smtp_to or "").split(",") if addr.strip()] or [smtp_user]
+    msg = MIMEText(content, "plain", "utf-8")
+    msg["Subject"] = Header("签到通知", "utf-8")
+    msg["From"] = smtp_user
+    msg["To"] = ", ".join(recipients)
+    try:
+        if use_ssl:
+            client = smtplib.SMTP_SSL(smtp_server, port, timeout=10)
+        else:
+            client = smtplib.SMTP(smtp_server, port, timeout=10)
+        with client:
+            if not use_ssl:
+                client.starttls()
+            client.login(smtp_user, smtp_password)
+            client.sendmail(smtp_user, recipients, msg.as_string())
+        print("SMTP 邮件推送成功！")
+    except Exception as e:
+        print(f"SMTP 邮件推送失败！{e}")
+
+
 def important_notice():
     # fork 版：重要通知改为读取本 fork 仓库带「通知」标签的开放 issue（原实现指向上游仓库）
     datas = requests.get(
@@ -383,6 +431,12 @@ def push_message(content_list: list, notice_info: dict):
     webhook_body = notice_info.get("webhook_body")
     pushme_key = notice_info.get("pushme_key")
     qlapi = notice_info.get("qlapi")
+    smtp_server = notice_info.get("smtp_server")
+    smtp_port = notice_info.get("smtp_port")
+    smtp_ssl = notice_info.get("smtp_ssl")
+    smtp_user = notice_info.get("smtp_user")
+    smtp_password = notice_info.get("smtp_password")
+    smtp_to = notice_info.get("smtp_to")
     content_str = "\n————————————\n\n".join(content_list)
     merge_push = notice_info.get("merge_push")
     message_list = [content_str]
@@ -408,6 +462,7 @@ def push_message(content_list: list, notice_info: dict):
             or webhook_url
             or pushme_key
             or qlapi
+            or (smtp_server and smtp_user and smtp_password)
             or (gotify_url and gotify_token)
         ):
             merge_push = False
@@ -564,6 +619,19 @@ def push_message(content_list: list, notice_info: dict):
                 message2qlapi(content=message)
             except Exception as e:
                 print("青龙 QLAPI 推送失败", e)
+        if smtp_server and smtp_user and smtp_password:
+            try:
+                message2smtp(
+                    smtp_server=smtp_server,
+                    smtp_user=smtp_user,
+                    smtp_password=smtp_password,
+                    content=message,
+                    smtp_port=smtp_port,
+                    smtp_ssl=smtp_ssl,
+                    smtp_to=smtp_to,
+                )
+            except Exception as e:
+                print("SMTP 邮件推送失败", e)
 
 
 if __name__ == "__main__":

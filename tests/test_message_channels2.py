@@ -10,10 +10,19 @@
 """
 
 import builtins
+import email as email_lib
+from email.header import decode_header, make_header
 
 import pytest
 
 from dailycheckin.utils import message
+
+
+def parse_sent_mail(raw):
+    msg = email_lib.message_from_string(raw)
+    payload = msg.get_payload(decode=True).decode("utf-8")
+    subject = str(make_header(decode_header(msg["Subject"])))
+    return {"to": msg["To"], "subject": subject, "payload": payload}
 
 
 class FakeResponse:
@@ -201,3 +210,116 @@ def test_push_message_dispatches_qlapi_with_merge_split(monkeypatch, no_qlapi):
         {"title": "签到通知", "content": "a"},
         {"title": "签到通知", "content": "b"},
     ]
+
+
+# ---------------------------------------------------------------------------
+# SMTP 邮件（Sitoi/dailycheckin#579，参考已关闭 #527 思路，标准库 smtplib 重写）
+# ---------------------------------------------------------------------------
+
+
+class FakeSMTPClient:
+    instances = []
+    starttls_calls = 0
+
+    def __init__(self, host, port, timeout=None):
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+        self.logins = []
+        self.sent = []
+        self.closed = False
+        FakeSMTPClient.instances.append(self)
+
+    def login(self, user, password):
+        self.logins.append((user, password))
+
+    def starttls(self):
+        FakeSMTPClient.starttls_calls += 1
+
+    def sendmail(self, from_addr, to_addrs, msg):
+        self.sent.append((from_addr, to_addrs, msg))
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.closed = True
+
+
+@pytest.fixture
+def fake_smtp(monkeypatch):
+    FakeSMTPClient.instances = []
+    FakeSMTPClient.starttls_calls = 0
+    monkeypatch.setattr(message.smtplib, "SMTP_SSL", FakeSMTPClient)
+    monkeypatch.setattr(message.smtplib, "SMTP", FakeSMTPClient)
+    return FakeSMTPClient
+
+
+def test_smtp_default_port_465_uses_ssl(fake_smtp, capsys):
+    message.message2smtp("smtp.example.com", "user@example.com", "pass", "hello")
+    (client,) = fake_smtp.instances
+    assert (client.host, client.port) == ("smtp.example.com", 465)
+    assert client.timeout == 10
+    assert client.logins == [("user@example.com", "pass")]
+    assert client.sent[0][0] == "user@example.com"
+    assert client.sent[0][1] == ["user@example.com"]  # 未配 smtp_to 时默认发给发件人
+    parsed = parse_sent_mail(client.sent[0][2])
+    assert parsed["subject"] == "签到通知"
+    assert parsed["payload"] == "hello"
+    assert fake_smtp.starttls_calls == 0
+    assert "SMTP 邮件推送成功" in capsys.readouterr().out
+
+
+def test_smtp_port_587_uses_starttls(fake_smtp):
+    message.message2smtp("smtp.example.com", "user@example.com", "pass", "hello", smtp_port="587")
+    (client,) = fake_smtp.instances
+    assert client.port == 587
+    assert fake_smtp.starttls_calls == 1
+    assert client.sent, "STARTTLS 路径也要完成发送"
+
+
+def test_smtp_ssl_override_selects_connection_mode(fake_smtp):
+    # smtp_ssl=true 在 587 端口也走 SMTP_SSL；smtp_ssl=false 在 465 端口走 SMTP+STARTTLS
+    message.message2smtp("smtp.example.com", "u@e.com", "p", "a", smtp_port="587", smtp_ssl="true")
+    message.message2smtp("smtp.example.com", "u@e.com", "p", "b", smtp_port="465", smtp_ssl="false")
+    assert fake_smtp.instances[0].port == 587
+    assert fake_smtp.instances[1].port == 465
+    assert fake_smtp.starttls_calls == 1  # 只有 smtp_ssl=false 那次走 STARTTLS
+
+
+def test_smtp_multiple_recipients(fake_smtp):
+    message.message2smtp(
+        "smtp.example.com", "user@example.com", "pass", "hello", smtp_to="a@x.com, b@x.com"
+    )
+    (client,) = fake_smtp.instances
+    assert client.sent[0][1] == ["a@x.com", "b@x.com"]
+    parsed = parse_sent_mail(client.sent[0][2])
+    assert parsed["to"] == "a@x.com, b@x.com"  # To 头含全部收件人
+
+
+def test_smtp_auth_failure_prints_failure_without_raising(fake_smtp, capsys):
+    def bad_login(user, password):
+        raise RuntimeError("(535, b'authentication failed')")
+
+    original = FakeSMTPClient.login
+    FakeSMTPClient.login = bad_login
+    try:
+        message.message2smtp("smtp.example.com", "user@example.com", "pass", "hello")
+    finally:
+        FakeSMTPClient.login = original
+    out = capsys.readouterr().out
+    assert "SMTP 邮件推送失败" in out
+    assert "SMTP 邮件推送成功" not in out
+
+
+def test_push_message_dispatches_smtp_with_merge_split(monkeypatch, fake_smtp):
+    monkeypatch.setattr(message, "important_notice", lambda: None)
+    # 仅配置 SMTP 时 merge_push 默认拆分（smtp_* 组合在默认集合中），两条内容各发一次
+    message.push_message(
+        ["a", "b"],
+        {"smtp_server": "smtp.example.com", "smtp_user": "u@e.com", "smtp_password": "p", "smtp_to": "a@x.com"},
+    )
+    sent_bodies = [body for client in fake_smtp.instances for _, _, body in client.sent]
+    assert len(sent_bodies) == 2
+    payloads = sorted(parse_sent_mail(body)["payload"] for body in sent_bodies)
+    assert payloads == ["a", "b"]

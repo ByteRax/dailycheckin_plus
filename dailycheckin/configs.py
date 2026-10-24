@@ -62,6 +62,12 @@ notice_map = {
     "WEBHOOK_BODY": "",
     "PUSHME_KEY": "",
     "QLAPI": "",
+    "SMTP_SERVER": "",
+    "SMTP_PORT": "",
+    "SMTP_SSL": "",
+    "SMTP_USER": "",
+    "SMTP_PASSWORD": "",
+    "SMTP_TO": "",
 }
 
 
