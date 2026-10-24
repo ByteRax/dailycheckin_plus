@@ -229,3 +229,14 @@ def test_get_nav_data_null_treated_as_not_login(monkeypatch):
 
     uname, uid, is_login, coin, vip_type, exp = BiliBili.get_nav(FakeSession())
     assert is_login is None and uname is None
+
+
+def test_report_task_uses_https():
+    # Refs: 安全审查 A09 H-3（2026-10-24）
+    # csrf(bili_jct)+SESSDATA 上报端点原为 http://api.bilibili.com/x/v2/history/report，
+    # https 版无凭据探测 200+证书校验通过、空表单响应与 http 基线一致，改走 https
+    session = FakeSession([("history/report", {"code": 0})])
+    ret = BiliBili.report_task(session=session, bili_jct="csrf-x", aid=1, cid=2)
+    assert ret == {"code": 0}
+    (method, url, _kwargs) = session.calls_to("history/report", method="POST")[0]
+    assert url == "https://api.bilibili.com/x/v2/history/report"
