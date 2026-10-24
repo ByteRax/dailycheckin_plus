@@ -4,7 +4,7 @@ import hmac
 import json
 import re
 import time
-from urllib.parse import quote_plus
+from urllib.parse import parse_qsl, quote_plus, urlencode, urlsplit, urlunsplit
 
 import requests
 
@@ -102,12 +102,18 @@ def message2dingtalk(dingtalk_secret, dingtalk_access_token, content):
     )
 
 
-def message2bark(bark_url: str, content):
+def message2bark(bark_url: str, content, bark_group=None, bark_icon=None):
     print("Bark 推送开始")
-    if not bark_url.endswith("/"):
-        bark_url += "/"
-    content = quote_plus(content)
-    url = f"{bark_url}{content}"
+    parts = urlsplit(bark_url)
+    path = parts.path if parts.path.endswith("/") else parts.path + "/"
+    query = dict(parse_qsl(parts.query))
+    if bark_group:
+        query["group"] = bark_group
+    if bark_icon:
+        query["icon"] = bark_icon
+    url = urlunsplit(
+        (parts.scheme, parts.netloc, path + quote_plus(content), urlencode(query), parts.fragment)
+    )
     headers = {"Content-type": "application/x-www-form-urlencoded"}
     requests.get(url=url, headers=headers, timeout=10)
 
@@ -285,6 +291,8 @@ def push_message(content_list: list, notice_info: dict):
     dingtalk_access_token = notice_info.get("dingtalk_access_token")
     fskey = notice_info.get("fskey")
     bark_url = notice_info.get("bark_url")
+    bark_group = notice_info.get("bark_group")
+    bark_icon = notice_info.get("bark_icon")
     sckey = notice_info.get("sckey")
     sendkey = notice_info.get("sendkey")
     qmsg_key = notice_info.get("qmsg_key")
@@ -387,7 +395,7 @@ def push_message(content_list: list, notice_info: dict):
                 print("企业微信应用消息推送失败", e)
         if bark_url:
             try:
-                message2bark(bark_url=bark_url, content=message)
+                message2bark(bark_url=bark_url, content=message, bark_group=bark_group, bark_icon=bark_icon)
             except Exception as e:
                 print("Bark 推送失败", e)
         if dingtalk_access_token and dingtalk_secret:

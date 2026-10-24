@@ -228,3 +228,34 @@ def test_push_message_passes_qmsg_options(monkeypatch):
             "qmsg_url": "https://qmsg.example.com",
         }
     ]
+
+
+# ---------------------------------------------------------------------------
+# bark（Sitoi/dailycheckin#387 #523；重实现自已关闭 PR 320 的 group/icon）
+# ---------------------------------------------------------------------------
+
+
+def test_bark_group_icon_as_query_params(fake_http):
+    message.message2bark("https://api.day.app/KEY", "签到", bark_group="daily", bark_icon="https://example.com/i.png")
+    (call,) = fake_http.calls
+    assert call["method"] == "GET"
+    assert call["url"] == "https://api.day.app/KEY/%E7%AD%BE%E5%88%B0?group=daily&icon=https%3A%2F%2Fexample.com%2Fi.png"
+    assert call["timeout"] == 10
+
+
+def test_bark_without_options_keeps_legacy_url_format(fake_http):
+    message.message2bark("https://api.day.app/KEY", "签到 成功")
+    assert fake_http.calls[0]["url"] == "https://api.day.app/KEY/%E7%AD%BE%E5%88%B0+%E6%88%90%E5%8A%9F"
+
+
+def test_bark_existing_query_params_survive(fake_http):
+    message.message2bark("https://api.day.app/KEY?sound=bell", "hi")
+    assert fake_http.calls[0]["url"] == "https://api.day.app/KEY/hi?sound=bell"
+
+
+def test_push_message_passes_bark_options(monkeypatch):
+    monkeypatch.setattr(message, "important_notice", lambda: None)
+    sent = []
+    monkeypatch.setattr(message, "message2bark", lambda **kw: sent.append(kw))
+    message.push_message(["a"], {"bark_url": "u", "bark_group": "g", "bark_icon": "i"})
+    assert sent == [{"bark_url": "u", "content": "a", "bark_group": "g", "bark_icon": "i"}]
