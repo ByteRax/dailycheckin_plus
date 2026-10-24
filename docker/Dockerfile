@@ -25,4 +25,9 @@ COPY requirements.txt setup.py pyproject.toml README.md /tmp/src/
 COPY dailycheckin /tmp/src/dailycheckin
 RUN pip install --no-cache-dir /tmp/src && rm -rf /tmp/src
 
+# Bake a default crontab so bare `docker run` works without a host mount;
+# docker-compose's ./cron/ volume mount overrides it when present.
+COPY docker/crontab_list.sh /dailycheckin/cron/crontab_list.sh
+RUN chmod +x /dailycheckin/cron/crontab_list.sh && mkdir -p /dailycheckin/logs
+
 ENTRYPOINT ["start.sh"]

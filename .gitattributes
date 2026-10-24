@@ -1,0 +1,5 @@
+# 容器入口与部署脚本必须保持 LF：CRLF 会把 shebang 变成 "/bin/sh\r"，
+# 镜像启动报 exec: no such file or directory（本机 autocrlf=true 环境实测）。
+*.sh text eol=lf
+docker/Dockerfile text eol=lf
+docker/docker-compose.yml text eol=lf
