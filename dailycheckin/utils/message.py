@@ -274,7 +274,7 @@ def message2xxtui(xxtui_key, content):
     requests.post(url=f"https://www.xxtui.com/xxtui/{xxtui_key}", json=data, timeout=10)
 
 
-def message2webhook(webhook_url: str, content: str, webhook_method: str = None, webhook_body: str = None) -> None:
+def message2webhook(webhook_url: str, content: str, webhook_method=None, webhook_body=None) -> None:
     print("自定义 Webhook 推送开始")
     title = "签到通知"
     method = (webhook_method or "POST").upper()
@@ -284,9 +284,8 @@ def message2webhook(webhook_url: str, content: str, webhook_method: str = None, 
         template = webhook_body or '{"title":"{title}","content":"{content}"}'
         try:
             # 占位符按 JSON 字符串字面量转义后替换，content 含引号/换行时仍产出合法 JSON
-            rendered = (
-                template.replace("{title}", json.dumps(title, ensure_ascii=False)[1:-1])
-                .replace("{content}", json.dumps(content, ensure_ascii=False)[1:-1])
+            rendered = template.replace("{title}", json.dumps(title, ensure_ascii=False)[1:-1]).replace(
+                "{content}", json.dumps(content, ensure_ascii=False)[1:-1]
             )
             body = json.loads(rendered)
         except Exception as e:

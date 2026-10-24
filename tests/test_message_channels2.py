@@ -12,6 +12,7 @@
 import builtins
 import email as email_lib
 from email.header import decode_header, make_header
+from typing import ClassVar
 
 import pytest
 
@@ -218,8 +219,8 @@ def test_push_message_dispatches_qlapi_with_merge_split(monkeypatch, no_qlapi):
 
 
 class FakeSMTPClient:
-    instances = []
-    starttls_calls = 0
+    instances: ClassVar[list] = []
+    starttls_calls: ClassVar[int] = 0
 
     def __init__(self, host, port, timeout=None):
         self.host = host
@@ -288,9 +289,7 @@ def test_smtp_ssl_override_selects_connection_mode(fake_smtp):
 
 
 def test_smtp_multiple_recipients(fake_smtp):
-    message.message2smtp(
-        "smtp.example.com", "user@example.com", "pass", "hello", smtp_to="a@x.com, b@x.com"
-    )
+    message.message2smtp("smtp.example.com", "user@example.com", "pass", "hello", smtp_to="a@x.com, b@x.com")
     (client,) = fake_smtp.instances
     assert client.sent[0][1] == ["a@x.com", "b@x.com"]
     parsed = parse_sent_mail(client.sent[0][2])
