@@ -161,3 +161,14 @@ class TestGetMode:
 
         assert "签到失败" in msg
         assert "签到链接" in msg
+
+
+def test_cookie_domain_uses_hostname_without_port():
+    # 带端口 URL：cookie domain 必须是 hostname（不含端口），否则 cookie 永不随请求发送（A09 L-2）
+    import inspect
+
+    import dailycheckin.discuz.main as dm
+
+    src = inspect.getsource(dm)
+    assert "urlparse(url).hostname" in src, "cookie domain 应使用 hostname（不含端口）"
+    assert "domain=host" in src
