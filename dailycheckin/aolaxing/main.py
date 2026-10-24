@@ -14,7 +14,8 @@ class AoLaXing(CheckIn):
         self.check_item = check_item
 
     def user(self, headers):
-        url = "http://service.100bt.com/creditmall/my/user_info.jsonp"
+        # 三个接口均携 Cookie 头，https 探测 200+证书校验通过、响应与 http 基线一致（Refs: 安全审查 A09 H-3）
+        url = "https://service.100bt.com/creditmall/my/user_info.jsonp"
         user_json = requests.get(url, headers=headers).json()
         user_data = user_json["jsonResult"]["data"]
         try:
@@ -33,7 +34,7 @@ class AoLaXing(CheckIn):
         return msgs
 
     def practise(self, headers, task_id):
-        url = f"http://service.100bt.com/creditmall/activity/do_task.jsonp?taskId={task_id}&gameId=2&_=1643440166690"
+        url = f"https://service.100bt.com/creditmall/activity/do_task.jsonp?taskId={task_id}&gameId=2&_=1643440166690"
         task_json = requests.get(url, headers=headers).json()
         try:
             message = task_json["jsonResult"]["message"]
@@ -42,7 +43,7 @@ class AoLaXing(CheckIn):
         return message
 
     def task(self, headers, msg: bool = False):
-        url = "http://service.100bt.com/creditmall/activity/daily_task_list.jsonp?gameId=2&_=1643437206026"
+        url = "https://service.100bt.com/creditmall/activity/daily_task_list.jsonp?gameId=2&_=1643437206026"
         task_json = requests.get(url, headers=headers).json()
         task_data = task_json["jsonResult"]["data"]
         task_finish_count = 0
