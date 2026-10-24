@@ -56,7 +56,8 @@ class Ximalaya(CheckIn):
             if reward is not None:
                 msg_list.append({"name": "签到奖励", "value": str(reward)})
             return "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg_list])
-        return f"签到失败: [{data.get('ret')}] {msg or '请重新抓取 Cookie'}"
+        # 远端 msg 截断到 100 字符, 避免异常长文案撑爆通知（A09 L-3）
+        return f"签到失败: [{data.get('ret')}] {(msg or '请重新抓取 Cookie')[:100]}"
 
     def main(self):
         cookie = (self.check_item.get("cookie") or "").strip()

@@ -42,11 +42,13 @@ class Custom(CheckIn):
 
     @staticmethod
     def _compile(pattern, label):
-        """编译用户正则。语法错误时抛 ValueError, 由调用方转为配置错误文案。"""
+        """编译用户正则。语法错误或类型错误时抛 ValueError, 由调用方转为配置错误文案。"""
         try:
             return re.compile(pattern)
         except re.error as e:
             raise ValueError(f"{label} 正则语法错误: {e}") from e
+        except TypeError as e:
+            raise ValueError(f"{label} 正则必须是字符串: {e}") from e
 
     def main(self):
         url = str(self.check_item.get("url") or "").strip()
@@ -89,7 +91,9 @@ class Custom(CheckIn):
             # 单次请求, 不做重试（requests 默认无重试, 也未挂载 Retry adapter）
             response = requests.request(method, url, headers=headers, data=body, timeout=self._TIMEOUT)
         except requests.RequestException as e:
-            return f"签到失败: 请求异常 ({url}): {e}"
+            # 回显 URL 时去掉 query（用户可能把 token 放在 ?token=…），异常文本里再补打码
+            shown = url.split("?", 1)[0]
+            return f"签到失败: 请求异常 ({shown}): {type(e).__name__}"
 
         text = response.text
         if already_re is not None and already_re.search(text):

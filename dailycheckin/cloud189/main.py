@@ -154,7 +154,7 @@ class Cloud189(CheckIn):
         except ValueError:
             raise Cloud189Error("登录失败: 响应格式异常")
         if login_result.get("result") != 0:
-            msg = str(login_result.get("msg") or f"result={login_result.get('result')}")
+            msg = str(login_result.get("msg") or f"result={login_result.get('result')}")[:100]
             if any(keyword in msg for keyword in ("验证码", "锁定", "频繁")):
                 msg += "(疑似触发风控, 请稍后再试或更换网络环境)"
             raise Cloud189Error(f"登录失败: {msg}")

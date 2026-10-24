@@ -280,3 +280,16 @@ def test_serverchan_and_bark_exception_logs_redact_urls(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "SCT123TSECRETKEY" not in out
     assert "<url-redacted>" in out
+
+
+def test_bark_network_exception_log_masks_url(monkeypatch, capsys):
+    # bark 网络异常路径（message2bark 内部）同样不得泄露 key（A09 L-6b）
+    key_url = "https://api.day.app/SECRETBARKKEY123"
+
+    def raise_url(**kw):
+        raise Exception("HTTPSConnectionPool(host='api.day.app'): url: /SECRETBARKKEY123/xxx")
+
+    monkeypatch.setattr(message.requests, "get", raise_url)
+    message.message2bark(key_url, "hello")
+    out = capsys.readouterr().out
+    assert "SECRETBARKKEY123" not in out

@@ -38,7 +38,7 @@ import CardList from '../../components/CardList'
 适用任意自定义 HTTP 签到接口（Refs: Sitoi/dailycheckin#576 例二）。
 
 <Callout type="warning" emoji="⚠️">
-  method/body 由使用者自负其责；服务不做任何自动重试。错误页也返回 200 的站点请务必配置 success 正则。
+  method/body 由使用者自负其责；服务不做任何自动重试。错误页也返回 200 的站点请务必配置 success 正则；already 判定无条件优先于 success——若成功响应也会命中 already 关键词，会被报告为「今日已签到」。
 </Callout>
 
 ### 说明

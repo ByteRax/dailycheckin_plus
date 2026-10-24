@@ -185,7 +185,7 @@ class TestRobustness:
         msg = Custom(check_item={"url": API_URL}).main()
 
         assert "签到失败" in msg
-        assert "refused" in msg
+        assert "ConnectionError" in msg or "refused" in msg
 
 
 class TestNaming:
@@ -202,3 +202,23 @@ class TestNaming:
         msg = Custom(check_item={"url": API_URL, "name": "游戏论坛"}).main()
 
         assert "游戏论坛" in msg
+
+
+def test_request_exception_shows_url_without_query():
+    # 请求异常回显去掉 query（?token=… 不外泄）且不带异常原文（A09 L-5）
+    import responses as responses_mod
+
+    obj = Custom(check_item={"url": "https://example.com/api?token=SECRET123", "success": "ok"})
+    with responses_mod.RequestsMock() as rs:
+        rs.add(responses_mod.GET, "https://example.com/api", body=requests.ConnectionError("connect error boom"))
+        result = obj.main()
+    assert "SECRET123" not in result
+    assert "token" not in result
+    assert "https://example.com/api" in result
+
+
+def test_non_string_regex_reports_config_error():
+    # already/success 非字符串（如 123）按配置错误处理, 不抛 TypeError 到编排器（A09 L-4b）
+    obj = Custom(check_item={"url": "https://example.com/", "already": 123})
+    result = obj.main()
+    assert "配置错误" in result
