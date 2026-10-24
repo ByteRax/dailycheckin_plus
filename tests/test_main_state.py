@@ -1,4 +1,4 @@
-"""checkin() 调度行为的测试(不联网、无真实凭据)。"""
+"""checkin() 状态判定与 include/exclude 过滤行为的测试(不联网、无真实凭据)。"""
 
 import sys
 import warnings
@@ -19,6 +19,23 @@ def _patch_env(monkeypatch, argv, check_info=({}, {})):
 
     monkeypatch.setattr(dailycheckin.main, "check_config", fake_check_config)
     return captured
+
+
+class TestFormatAccountResult:
+    def test_none_marks_failure(self):
+        text, success = _format_account_result("假服务", None)
+        assert success is False
+        assert text == "「假服务」\n签到失败（无返回结果）"
+
+    def test_string_marks_success(self):
+        text, success = _format_account_result("假服务", "名字: 值")
+        assert success is True
+        assert text == "「假服务」\n名字: 值"
+
+    def test_empty_string_still_success(self):
+        # 契约：仅处理 None，其他返回值语义不变
+        _, success = _format_account_result("假服务", "")
+        assert success is True
 
 
 class TestIncludeExclude:
@@ -55,23 +72,6 @@ class TestIncludeExclude:
         _patch_env(monkeypatch, ["--include", "fake"], check_info=({}, {}))
         checkin()
         assert "没有可执行的签到任务" in capsys.readouterr().out
-
-
-class TestFormatAccountResult:
-    def test_none_marks_failure(self):
-        text, success = _format_account_result("假服务", None)
-        assert success is False
-        assert text == "「假服务」\n签到失败（无返回结果）"
-
-    def test_string_marks_success(self):
-        text, success = _format_account_result("假服务", "名字: 值")
-        assert success is True
-        assert text == "「假服务」\n名字: 值"
-
-    def test_empty_string_still_success(self):
-        # 契约: 仅处理 None, 其他返回值语义不变
-        _, success = _format_account_result("假服务", "")
-        assert success is True
 
 
 class _NoneService:
