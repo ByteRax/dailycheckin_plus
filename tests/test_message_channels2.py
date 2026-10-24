@@ -11,6 +11,7 @@
 
 import builtins
 import email as email_lib
+import ssl as ssl_mod
 from email.header import decode_header, make_header
 from typing import ClassVar
 
@@ -419,10 +420,6 @@ def test_push_message_dispatches_wxpusher_with_merge_split(monkeypatch):
 
 def test_smtp_uses_cert_verifying_context(monkeypatch):
     # SMTP 必须显式校验服务器证书（A09 H1）：SSL 与 STARTTLS 分支都传 context
-    import ssl as ssl_mod
-
-    import dailycheckin.utils.message as msg_mod
-
     captured = {}
 
     class FakeClient:
@@ -444,9 +441,9 @@ def test_smtp_uses_cert_verifying_context(monkeypatch):
         def sendmail(self, *a):
             pass
 
-    monkeypatch.setattr(msg_mod.smtplib, "SMTP_SSL", FakeClient)
-    monkeypatch.setattr(msg_mod.smtplib, "SMTP", FakeClient)
-    msg_mod.message2smtp(
+    monkeypatch.setattr(message.smtplib, "SMTP_SSL", FakeClient)
+    monkeypatch.setattr(message.smtplib, "SMTP", FakeClient)
+    message.message2smtp(
         smtp_server="s.example.com",
         smtp_user="u@example.com",
         smtp_password="pw",

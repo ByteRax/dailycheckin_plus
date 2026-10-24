@@ -13,6 +13,7 @@ import pytest
 import requests
 import responses
 
+import dailycheckin.mimotion.main as mm
 from dailycheckin.mimotion.main import MiMotion
 
 PHONE_0 = "13800000001"
@@ -312,8 +313,6 @@ class TestRequestTimeouts:
 
 def test_network_error_keeps_token_without_relogin(monkeypatch, tmp_path):
     # 上传超时（响应 None）不得触发重新登录烧配额，应保留 token 按失败上报
-    import dailycheckin.mimotion.main as mm
-
     obj = mm.MiMotion.__new__(mm.MiMotion)
     obj.check_item = {"password": "pw", "user_id": "u1", "app_token": "tok"}
     monkeypatch.setattr(obj, "upload_step", lambda *a: None)
