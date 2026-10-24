@@ -181,6 +181,36 @@ def message2pushplus(pushplus_token, content, pushplus_topic=None):
     requests.post(url="http://www.pushplus.plus/send", data=json.dumps(data), timeout=10)
 
 
+def message2wpush(wpush_apikey, content, wpush_channel=None, wpush_topic_code=None):
+    print("WPUSH 推送开始")
+    data = {
+        "apikey": wpush_apikey,
+        "title": "签到通知",
+        "content": content,
+        "channel": wpush_channel or "wechat",
+    }
+    if wpush_topic_code:
+        data["topic_code"] = wpush_topic_code
+    response = requests.post(
+        url="https://api.wpush.cn/api/v1/send",
+        json=data,
+        headers={"Content-Type": "application/json"},
+        timeout=10,
+        allow_redirects=False,
+    )
+    try:
+        result = response.json()
+    except Exception:
+        print("WPUSH 推送失败！响应解析失败")
+        return
+    # 成败只按响应 body 的 code 判定：WPUSH 鉴权失败时返回 HTTP 200 + body code 401，
+    # 按 HTTP 状态码判定不可行（live 验证见 A02）。
+    if result.get("code") == 0:
+        print("WPUSH 推送成功！")
+    else:
+        print(f'WPUSH 推送失败！错误信息：{result.get("message") or result}')
+
+
 def message2gotify(gotify_url: str, gotify_token: str, gotify_priority: str, content: str) -> None:
     print("Gotify 服务启动")
     if not gotify_priority:
@@ -265,6 +295,9 @@ def push_message(content_list: list, notice_info: dict):
     qywx_origin = notice_info.get("qywx_origin")
     pushplus_token = notice_info.get("pushplus_token")
     pushplus_topic = notice_info.get("pushplus_topic")
+    wpush_apikey = notice_info.get("wpush_apikey")
+    wpush_channel = notice_info.get("wpush_channel")
+    wpush_topic_code = notice_info.get("wpush_topic_code")
     gotify_url = notice_info.get("gotify_url")
     gotify_token = notice_info.get("gotify_token")
     gotify_priority = notice_info.get("gotify_priority")
@@ -290,6 +323,7 @@ def push_message(content_list: list, notice_info: dict):
             or qywx_agentid
             or bark_url
             or pushplus_token
+            or wpush_apikey
             or ntfy_topic
             or (gotify_url and gotify_token)
         ):
@@ -371,6 +405,16 @@ def push_message(content_list: list, notice_info: dict):
                 )
             except Exception as e:
                 print("Pushplus 推送失败", e)
+        if wpush_apikey:
+            try:
+                message2wpush(
+                    wpush_apikey=wpush_apikey,
+                    content=message,
+                    wpush_channel=wpush_channel,
+                    wpush_topic_code=wpush_topic_code,
+                )
+            except Exception as e:
+                print("WPUSH 推送失败", e)
         if tg_user_id and tg_bot_token:
             try:
                 message2telegram(
