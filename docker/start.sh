@@ -16,4 +16,4 @@ if [ $CRONTAB_FILE ]; then
 fi
 
 echo "启动 crondtab 定时任务主进程..."
-crond -f
+cron -f
