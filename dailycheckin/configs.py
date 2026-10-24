@@ -17,6 +17,8 @@ checkin_map = checkin_map()
 
 notice_map = {
     "BARK_URL": "",
+    "BARK_GROUP": "",
+    "BARK_ICON": "",
     "COOLPUSHEMAIL": "",
     "COOLPUSHQQ": "",
     "COOLPUSHSKEY": "",
@@ -26,8 +28,14 @@ notice_map = {
     "FSKEY": "",
     "PUSHPLUS_TOKEN": "",
     "PUSHPLUS_TOPIC": "",
+    "WPUSH_APIKEY": "",
+    "WPUSH_CHANNEL": "",
+    "WPUSH_TOPIC_CODE": "",
     "QMSG_KEY": "",
     "QMSG_TYPE": "",
+    "QMSG_QQ": "",
+    "QMSG_BOT": "",
+    "QMSG_URL": "",
     "QYWX_AGENTID": "",
     "QYWX_CORPID": "",
     "QYWX_CORPSECRET": "",
@@ -48,6 +56,7 @@ notice_map = {
     "NTFY_URL": "",
     "NTFY_TOPIC": "",
     "NTFY_PRIORITY": "",
+    "XXTUI_KEY": "",
 }
 
 
