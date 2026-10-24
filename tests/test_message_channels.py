@@ -64,6 +64,7 @@ def test_all_push_requests_have_timeout(fake_http):
     message.message2gotify("https://gotify.example.com", "gtoken", "5", "hello")
     message.message2ntfy("https://ntfy.example.com", "topic", "3", "hello")
     message.message2wpush("apikey1", "hello")
+    message.message2xxtui("xxtuikey", "hello")
     # important_notice 在 push_message 推送路径上，同样不允许无限挂起
     fake_http.response = FakeResponse(json_data=[])
     message.important_notice()
@@ -71,7 +72,7 @@ def test_all_push_requests_have_timeout(fake_http):
     for call in fake_http.calls:
         assert call["timeout"] == 10, f"{call['method']} {call['url']} 缺少 timeout=10"
     # 每个渠道函数都确实发出了请求
-    assert len(fake_http.calls) >= 15
+    assert len(fake_http.calls) >= 16
 
 
 # ---------------------------------------------------------------------------
@@ -158,3 +159,26 @@ def test_push_message_dispatches_wpush_with_merge_split(monkeypatch):
     assert sent[0]["wpush_apikey"] == "k"
     assert sent[0]["wpush_channel"] == "mail"
     assert sent[0]["wpush_topic_code"] == "t"
+
+
+# ---------------------------------------------------------------------------
+# xxtui（Sitoi/dailycheckin#564）
+# ---------------------------------------------------------------------------
+
+
+def test_xxtui_payload(fake_http):
+    message.message2xxtui("xxtuikey", "hello")
+    (call,) = fake_http.calls
+    assert call["method"] == "POST"
+    assert call["url"] == "https://www.xxtui.com/xxtui/xxtuikey"
+    assert call["json"] == {"from": "DailyCheckIn 每日签到脚本", "title": "每日签到", "content": "hello"}
+    assert call["timeout"] == 10
+
+
+def test_push_message_dispatches_xxtui_with_merge_split(monkeypatch):
+    monkeypatch.setattr(message, "important_notice", lambda: None)
+    sent = []
+    monkeypatch.setattr(message, "message2xxtui", lambda **kw: sent.append(kw))
+    # 仅配置 xxtui 时 merge_push 默认拆分（原 PR 564 漏补的默认集合成员）
+    message.push_message(["a", "b"], {"xxtui_key": "k"})
+    assert sent == [{"xxtui_key": "k", "content": "a"}, {"xxtui_key": "k", "content": "b"}]

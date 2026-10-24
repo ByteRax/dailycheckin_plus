@@ -254,6 +254,12 @@ def message2ntfy(ntfy_url: str, ntfy_topic: str, ntfy_priority: str, content: st
         print("Ntfy 推送失败！错误信息：", response.text)
 
 
+def message2xxtui(xxtui_key, content):
+    print("xxtui 推送开始")
+    data = {"from": "DailyCheckIn 每日签到脚本", "title": "每日签到", "content": content}
+    requests.post(url=f"https://www.xxtui.com/xxtui/{xxtui_key}", json=data, timeout=10)
+
+
 def important_notice():
     datas = requests.get(
         url="https://api.github.com/repos/Sitoi/dailycheckin/issues?state=open&labels=通知", timeout=10
@@ -304,6 +310,7 @@ def push_message(content_list: list, notice_info: dict):
     ntfy_url = notice_info.get("ntfy_url")
     ntfy_topic = notice_info.get("ntfy_topic")
     ntfy_priority = notice_info.get("ntfy_priority")
+    xxtui_key = notice_info.get("xxtui_key")
     content_str = "\n————————————\n\n".join(content_list)
     merge_push = notice_info.get("merge_push")
     message_list = [content_str]
@@ -325,6 +332,7 @@ def push_message(content_list: list, notice_info: dict):
             or pushplus_token
             or wpush_apikey
             or ntfy_topic
+            or xxtui_key
             or (gotify_url and gotify_token)
         ):
             merge_push = False
@@ -446,6 +454,14 @@ def push_message(content_list: list, notice_info: dict):
                 )
             except Exception as e:
                 print("Ntfy 推送失败", e)
+        if xxtui_key:
+            try:
+                message2xxtui(
+                    xxtui_key=xxtui_key,
+                    content=message,
+                )
+            except Exception as e:
+                print("Xxtui 推送失败", e)
 
 
 if __name__ == "__main__":
