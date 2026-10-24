@@ -2,11 +2,8 @@ import json
 import os
 
 import requests
-import urllib3
 
 from dailycheckin import CheckIn
-
-urllib3.disable_warnings()
 
 
 class AliYun(CheckIn):

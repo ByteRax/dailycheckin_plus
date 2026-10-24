@@ -267,3 +267,16 @@ def test_bark_single_request_http_error_is_failure(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "推送失败" in out
     assert "推送成功" not in out
+
+
+def test_serverchan_and_bark_exception_logs_redact_urls(monkeypatch, capsys):
+    # 网络异常串含完整 URL（sendkey 路径段/编码内容），日志必须打码（A09 round-2 M-1）
+
+    def raise_with_url(*a, **kw):
+        raise Exception("HTTPSConnectionPool(host='sctapi.ftqq.com'): url: /SCT123TSECRETKEY.send")
+
+    monkeypatch.setattr(message.requests, "post", raise_with_url)
+    message._serverchan_send("https://sctapi.ftqq.com/SCT123TSECRETKEY.send", {"title": "t"})
+    out = capsys.readouterr().out
+    assert "SCT123TSECRETKEY" not in out
+    assert "<url-redacted>" in out

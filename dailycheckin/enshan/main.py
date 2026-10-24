@@ -3,11 +3,8 @@ import os
 import re
 
 import requests
-import urllib3
 
 from dailycheckin import CheckIn
-
-urllib3.disable_warnings()
 
 
 class EnShanError(Exception):

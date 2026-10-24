@@ -5,11 +5,8 @@ from html import unescape
 from urllib.parse import urlparse
 
 import requests
-import urllib3
 
 from dailycheckin import CheckIn
-
-urllib3.disable_warnings()
 
 
 class DiscuzError(Exception):

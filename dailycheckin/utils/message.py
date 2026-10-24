@@ -14,10 +14,20 @@ from urllib.parse import parse_qsl, quote_plus, urlencode, urlsplit, urlunsplit
 import requests
 
 
+def _redact_urls(text: str) -> str:
+    # requests 异常串会内嵌完整 URL（含 sendkey/bark key 路径段与编码后的推送内容）；
+    # 覆盖两种形态：带 scheme 的完整 URL 与 requests 的 "url: /path" path-only 形态
+    return re.sub(r"(?:https?://\S+|url: \S+)", "<url-redacted>", str(text))
+
+
 def _serverchan_send(url, data):
     # Server 酱统一发送 + 成败判定：Turbo/Server酱³ 返回 body code==0（官方 SDK 一致，
     # 见 https://github.com/easychen/serverchan-sdk）；旧版 sc.ftqq.com 返回 errno==0。
-    response = requests.post(url=url, data=data, timeout=10)
+    try:
+        response = requests.post(url=url, data=data, timeout=10)
+    except Exception as e:
+        print(f"Server 酱推送失败！网络异常：{_redact_urls(e)}")
+        return
     try:
         result = response.json()
     except Exception:
@@ -206,7 +216,7 @@ def message2bark(bark_url: str, content, bark_group=None, bark_icon=None, bark_s
                 timeout=10,
             )
         except Exception as e:
-            print(f"Bark 推送失败（{index + 1}/{total}）", e)
+            print(f"Bark 推送失败（{index + 1}/{total}）", _redact_urls(e))
             continue
         if 200 <= response.status_code < 300:
             ok_count += 1
@@ -585,6 +595,10 @@ def push_message(content_list: list, notice_info: dict):
     wxpusher_uids = notice_info.get("wxpusher_uids")
     content_str = "\n————————————\n\n".join(content_list)
     merge_push = notice_info.get("merge_push")
+    # MERGE_PUSH 未配置时的默认规则：下方集合内的渠道（bark/qmsg/webhook 等 URL 长度或频率敏感型）
+    # 默认「逐条拆分」发送；集合外渠道（Server酱/飞书/钉钉/TG/群机器人等）默认「合并为一条」。
+    # Server酱（sckey/sendkey）因 Turbo 每日 5 条配额刻意留在集合外（默认合并）。
+    # 用户始终可用 MERGE_PUSH: true/false 显式覆盖。
     message_list = [content_str]
     try:
         notice = important_notice()
@@ -665,7 +679,7 @@ def push_message(content_list: list, notice_info: dict):
                     bark_sound=bark_sound,
                 )
             except Exception as e:
-                print("Bark 推送失败", e)
+                print("Bark 推送失败", _redact_urls(e))
         if dingtalk_access_token and dingtalk_secret:
             try:
                 message2dingtalk(

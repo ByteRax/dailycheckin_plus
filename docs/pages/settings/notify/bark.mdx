@@ -91,7 +91,7 @@ import { Callout } from 'nextra/components'
 # BARK
 
 <Callout type="warning">
-  通知消息在 Bark 有长度限制，如果没收到推送，请将 MERGE_PUSH 改为 false
+  超长通知内容会自动分批发送；如仍收不到推送，可将 MERGE_PUSH 显式设为 false 逐条发送
 </Callout>
 
 ### 配置示例

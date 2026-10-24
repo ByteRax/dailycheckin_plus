@@ -4,11 +4,8 @@ import os
 import time
 
 import requests
-import urllib3
 
 from dailycheckin import CheckIn
-
-urllib3.disable_warnings()
 
 
 class SMZDM(CheckIn):
