@@ -153,3 +153,51 @@ def test_push_message_dispatches_pushme_with_merge_split(monkeypatch):
     # 仅配置 pushme 时 merge_push 默认拆分（pushme_key 在默认集合中），两条内容各推一次
     message.push_message(["a", "b"], {"pushme_key": "k"})
     assert sent == [{"pushme_key": "k", "content": "a"}, {"pushme_key": "k", "content": "b"}]
+
+
+# ---------------------------------------------------------------------------
+# QLAPI 青龙桥（Sitoi/dailycheckin#573）
+# ---------------------------------------------------------------------------
+
+
+class FakeQLAPI:
+    def __init__(self):
+        self.notifications = []
+
+    def systemNotify(self, payload):
+        self.notifications.append(payload)
+
+
+@pytest.fixture
+def no_qlapi(monkeypatch):
+    monkeypatch.delattr(builtins, "QLAPI", raising=False)
+
+
+def test_qlapi_calls_system_notify_when_present(no_qlapi, monkeypatch, capsys):
+    fake = FakeQLAPI()
+    monkeypatch.setattr(builtins, "QLAPI", fake, raising=False)
+    message.message2qlapi("签到内容")
+    assert fake.notifications == [{"title": "签到通知", "content": "签到内容"}]
+    out = capsys.readouterr().out
+    assert "QLAPI 推送成功" in out
+    assert "跳过" not in out
+
+
+def test_qlapi_skips_without_qlapi_environment(no_qlapi, capsys):
+    # 非青龙环境不得抛 NameError/AttributeError，「跳过」不算错误
+    message.message2qlapi("签到内容")
+    out = capsys.readouterr().out
+    assert "未检测到青龙 QLAPI 环境，跳过" in out
+    assert "失败" not in out
+
+
+def test_push_message_dispatches_qlapi_with_merge_split(monkeypatch, no_qlapi):
+    monkeypatch.setattr(message, "important_notice", lambda: None)
+    fake = FakeQLAPI()
+    monkeypatch.setattr(builtins, "QLAPI", fake, raising=False)
+    # 仅配置 qlapi 时 merge_push 默认拆分（qlapi 在默认集合中），两条内容各推一次
+    message.push_message(["a", "b"], {"qlapi": "true"})
+    assert fake.notifications == [
+        {"title": "签到通知", "content": "a"},
+        {"title": "签到通知", "content": "b"},
+    ]

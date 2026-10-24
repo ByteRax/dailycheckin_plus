@@ -61,6 +61,7 @@ notice_map = {
     "WEBHOOK_METHOD": "",
     "WEBHOOK_BODY": "",
     "PUSHME_KEY": "",
+    "QLAPI": "",
 }
 
 

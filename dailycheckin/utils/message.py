@@ -1,4 +1,5 @@
 import base64
+import builtins
 import hashlib
 import hmac
 import json
@@ -309,6 +310,16 @@ def message2pushme(pushme_key: str, content: str) -> None:
         print(f"PushMe 推送失败！HTTP {response.status_code}")
 
 
+def message2qlapi(content: str) -> None:
+    print("青龙 QLAPI 推送开始")
+    qlapi = getattr(builtins, "QLAPI", None)
+    if qlapi is None:
+        print("未检测到青龙 QLAPI 环境，跳过")
+        return
+    qlapi.systemNotify({"title": "签到通知", "content": content})
+    print("青龙 QLAPI 推送成功！")
+
+
 def important_notice():
     # fork 版：重要通知改为读取本 fork 仓库带「通知」标签的开放 issue（原实现指向上游仓库）
     datas = requests.get(
@@ -371,6 +382,7 @@ def push_message(content_list: list, notice_info: dict):
     webhook_method = notice_info.get("webhook_method")
     webhook_body = notice_info.get("webhook_body")
     pushme_key = notice_info.get("pushme_key")
+    qlapi = notice_info.get("qlapi")
     content_str = "\n————————————\n\n".join(content_list)
     merge_push = notice_info.get("merge_push")
     message_list = [content_str]
@@ -395,6 +407,7 @@ def push_message(content_list: list, notice_info: dict):
             or xxtui_key
             or webhook_url
             or pushme_key
+            or qlapi
             or (gotify_url and gotify_token)
         ):
             merge_push = False
@@ -546,6 +559,11 @@ def push_message(content_list: list, notice_info: dict):
                 message2pushme(pushme_key=pushme_key, content=message)
             except Exception as e:
                 print("PushMe 推送失败", e)
+        if qlapi:
+            try:
+                message2qlapi(content=message)
+            except Exception as e:
+                print("青龙 QLAPI 推送失败", e)
 
 
 if __name__ == "__main__":
