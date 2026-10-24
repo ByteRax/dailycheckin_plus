@@ -4,6 +4,8 @@
 # - login/acc/pe/getsess 携 YNOTE_SESS/YNOTE_PERS Cookie，原为 http:// 明文；
 #   https 版无凭据探测与 http 基线响应完全一致（500 ecode 2035），证书校验通过，改走 https
 
+import json
+
 import dailycheckin.youdao.main as youdao_module
 from dailycheckin.youdao.main import YouDao
 
@@ -22,8 +24,6 @@ class FakeResponse:
         self.cookies = cookies or FakeCookies()
 
     def json(self):
-        import json
-
         return json.loads(self.text)
 
 

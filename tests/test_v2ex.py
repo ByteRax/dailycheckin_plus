@@ -3,6 +3,9 @@
 # Refs: Sitoi/dailycheckin#525
 # - 首页未匹配到 once 签到链接时应抛明确异常（由上层记 ❌），不再静默返回造成假成功
 
+import importlib
+import urllib3
+
 import pytest
 
 import dailycheckin.v2ex.main as v2ex_module
@@ -137,10 +140,6 @@ def test_sign_requests_keep_tls_verification():
 def test_module_does_not_disable_warnings(monkeypatch):
     # Refs: 安全审查 A09 H-2（2026-10-24）
     # 模块导入不得调用 urllib3.disable_warnings()（进程级静默 InsecureRequestWarning）
-    import importlib
-
-    import urllib3
-
     calls = []
     monkeypatch.setattr(urllib3, "disable_warnings", lambda *a, **k: calls.append(a))
     importlib.reload(v2ex_module)
