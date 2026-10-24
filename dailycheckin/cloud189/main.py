@@ -117,7 +117,7 @@ class Cloud189(CheckIn):
             username_cipher = self._rsa_encrypt(pub_key, self.username)
             password_cipher = self._rsa_encrypt(pub_key, self.password)
         except Exception:
-            raise Cloud189Error("获取公钥失败: 公钥格式无法解析")
+            raise Cloud189Error("密码加密失败: 公钥格式无法解析")
         data = {
             "appKey": self.APP_ID,
             "accountType": "02",

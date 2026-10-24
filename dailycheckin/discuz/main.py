@@ -156,7 +156,8 @@ class Discuz(CheckIn):
             return f"签到失败: url 配置错误（需以 http:// 或 https:// 开头）: {url}"
         if not cookie:
             return "签到失败: 缺少 cookie 配置"
-        host = urlparse(url).netloc
+        # cookie domain 用 hostname（不带端口）：带端口 URL 下 netloc 含端口会导致 cookie 永不发送
+        host = urlparse(url).hostname or urlparse(url).netloc
         session = requests.Session()
         session.headers.update(
             {

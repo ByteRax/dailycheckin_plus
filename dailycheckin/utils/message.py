@@ -644,7 +644,7 @@ def push_message(content_list: list, notice_info: dict):
                     qmsg_url=qmsg_url,
                 )
             except Exception as e:
-                print("qmsg 推送失败", e)
+                print("qmsg 推送失败", _redact_urls(e))
         if coolpushskey:
             try:
                 message2coolpush(
@@ -655,7 +655,7 @@ def push_message(content_list: list, notice_info: dict):
                     content=message,
                 )
             except Exception as e:
-                print("coolpush 推送失败", e)
+                print("coolpush 推送失败", _redact_urls(e))
         if qywx_touser and qywx_corpid and qywx_corpsecret and qywx_agentid:
             try:
                 message2qywxapp(
@@ -668,7 +668,7 @@ def push_message(content_list: list, notice_info: dict):
                     content=message,
                 )
             except Exception as e:
-                print("企业微信应用消息推送失败", e)
+                print("企业微信应用消息推送失败", _redact_urls(e))
         if bark_url:
             try:
                 message2bark(
@@ -688,27 +688,27 @@ def push_message(content_list: list, notice_info: dict):
                     content=message,
                 )
             except Exception as e:
-                print("钉钉推送失败", e)
+                print("钉钉推送失败", _redact_urls(e))
         if fskey:
             try:
                 message2feishu(fskey=fskey, content=message)
             except Exception as e:
-                print("飞书推送失败", e)
+                print("飞书推送失败", _redact_urls(e))
         if sckey:
             try:
                 message2server(sckey=sckey, content=message)
             except Exception as e:
-                print("Server 推送失败", e)
+                print("Server 推送失败", _redact_urls(e))
         if sendkey:
             try:
                 message2server_turbo(sendkey=sendkey, content=message)
             except Exception as e:
-                print("Server Turbo 推送失败", e)
+                print("Server Turbo 推送失败", _redact_urls(e))
         if qywx_key:
             try:
                 message2qywxrobot(qywx_key=qywx_key, content=message)
             except Exception as e:
-                print("企业微信群机器人推送失败", e)
+                print("企业微信群机器人推送失败", _redact_urls(e))
         if pushplus_token:
             try:
                 message2pushplus(
@@ -717,7 +717,7 @@ def push_message(content_list: list, notice_info: dict):
                     pushplus_topic=pushplus_topic,
                 )
             except Exception as e:
-                print("Pushplus 推送失败", e)
+                print("Pushplus 推送失败", _redact_urls(e))
         if wpush_apikey:
             try:
                 message2wpush(
@@ -727,7 +727,7 @@ def push_message(content_list: list, notice_info: dict):
                     wpush_topic_code=wpush_topic_code,
                 )
             except Exception as e:
-                print("WPUSH 推送失败", e)
+                print("WPUSH 推送失败", _redact_urls(e))
         if tg_user_id and tg_bot_token:
             try:
                 message2telegram(
@@ -738,7 +738,7 @@ def push_message(content_list: list, notice_info: dict):
                     content=message,
                 )
             except Exception as e:
-                print("Telegram 推送失败", e)
+                print("Telegram 推送失败", _redact_urls(e))
         if gotify_url and gotify_token:
             try:
                 message2gotify(
@@ -748,7 +748,7 @@ def push_message(content_list: list, notice_info: dict):
                     content=message,
                 )
             except Exception as e:
-                print("Gotify 推送失败", e)
+                print("Gotify 推送失败", _redact_urls(e))
         if ntfy_topic:
             try:
                 message2ntfy(
@@ -758,7 +758,7 @@ def push_message(content_list: list, notice_info: dict):
                     content=message,
                 )
             except Exception as e:
-                print("Ntfy 推送失败", e)
+                print("Ntfy 推送失败", _redact_urls(e))
         if xxtui_key:
             try:
                 message2xxtui(
@@ -792,7 +792,7 @@ def push_message(content_list: list, notice_info: dict):
             try:
                 message2qlapi(content=message)
             except Exception as e:
-                print("青龙 QLAPI 推送失败", e)
+                print("青龙 QLAPI 推送失败", _redact_urls(e))
         if smtp_server and smtp_user and smtp_password:
             try:
                 message2smtp(
@@ -805,12 +805,12 @@ def push_message(content_list: list, notice_info: dict):
                     smtp_to=smtp_to,
                 )
             except Exception as e:
-                print("SMTP 邮件推送失败", e)
+                print("SMTP 邮件推送失败", _redact_urls(e))
         if pushdeer_pushkey:
             try:
                 message2pushdeer(pushdeer_pushkey=pushdeer_pushkey, content=message)
             except Exception as e:
-                print("PushDeer 推送失败", e)
+                print("PushDeer 推送失败", _redact_urls(e))
         if wxpusher_apptoken and wxpusher_uids:
             try:
                 message2wxpusher(
@@ -819,7 +819,7 @@ def push_message(content_list: list, notice_info: dict):
                     content=message,
                 )
             except Exception as e:
-                print("wxPusher 推送失败", e)
+                print("wxPusher 推送失败", _redact_urls(e))
 
 
 if __name__ == "__main__":
