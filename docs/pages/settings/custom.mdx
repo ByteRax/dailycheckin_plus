@@ -1,0 +1,47 @@
+import { Callout } from 'nextra/components'
+import { Steps } from 'nextra/components'
+import CardList from '../../components/CardList'
+
+<CardList />
+
+# 通用 Discuz 论坛
+
+### 配置示例
+
+```json filename="config.json" copy
+{
+  "DISCUZ": [
+    {
+      "url": "https://bbs.example.com",
+      "cookie": "xxx_auth=xxxxxx; xxx_saltkey=xxxxxx",
+      "sign_plugin": "dsu_paulsign:sign"
+    },
+    {
+      "url": "论坛地址",
+      "cookie": "多账号 cookie 填写，请参考上面，cookie 以实际获取为准"
+    }
+  ]
+}
+```
+
+### 配置说明
+
+|     _**name**_     | 任务显示名（可选，默认 URL host） |
+|      _**url**_     | 请求地址 |
+|     _**method**_   | GET 或 POST（默认 GET） |
+|    _**headers**_   | 额外请求头 dict（可选） |
+|      _**body**_    | POST 请求体字符串（可选） |
+|     _**cookie**_   | Cookie 头（可选） |
+|    _**success**_   | 成功判定正则（可选；配置后必须命中才算成功，2xx 不再兜底） |
+|    _**already**_   | 已签到判定正则（可选，优先于 success） |
+
+适用任意自定义 HTTP 签到接口（Refs: Sitoi/dailycheckin#576 例二）。
+
+<Callout type="warning" emoji="⚠️">
+  method/body 由使用者自负其责；服务不做任何自动重试。错误页也返回 200 的站点请务必配置 success 正则。
+</Callout>
+
+### 说明
+
+- 多账号即多个任务，逐个独立执行，单个失败不影响其他。
+- 当前为离线验证（mock 回归）状态，首次使用请观察一次真实结果反馈。

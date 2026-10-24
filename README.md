@@ -78,6 +78,7 @@ pip install "dailycheckin @ git+https://github.com/ByteRax/dailycheckin_plus@mai
 | 🟢️  | ALIYUN    | [阿里云盘](https://www.aliyundrive.com/drive/)             | 24.02.20 | 签到获取免费会员和空间                                                       |
 | 🟢️  | ENSHAN    | [恩山无线论坛](https://www.right.com.cn/forum/)            | 24.02.20 | 签到获取硬币和积分                                                           |
 | 🟢️  | FNNASCLUB | [飞牛 Nas](https://club.fnnas.com/)                        | 25.12.09 | 签到奖励                                                                     |
+| 🟡   | CUSTOM    | 自定义 HTTP 签到                                            | fork 新增 | 任意自定义接口（#576 例二）                                                 |
 | 🟡   | DISCUZ    | 通用 Discuz 论坛                                            | fork 新增 | 自定义论坛签到（#576 #556 #549）                                            |
 | 🟡   | XIMALAYA  | [喜马拉雅](https://www.ximalaya.com/)                      | fork 新增 | 每日签到（#452）                                                             |
 | 🟡   | CLOUD189  | [天翼云盘](https://cloud.189.cn/)                          | fork 新增 | 每日签到领取空间奖励（#481）                                                 |
