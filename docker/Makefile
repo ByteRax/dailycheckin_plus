@@ -1,10 +1,10 @@
 .PHONY: build up stop pull logs down exec buildx pushx
 
 buildx:
-	docker buildx build --platform=linux/arm/v6,linux/arm/v7,linux/arm64,linux/amd64 -t sitoi/dailycheckin:latest  .
+	docker buildx build --platform=linux/arm64,linux/amd64 -t ghcr.io/byterax/dailycheckin_plus:latest -f Dockerfile ..
 
 pushx:
-	docker buildx build --platform=linux/arm/v6,linux/arm/v7,linux/arm64,linux/amd64 -t sitoi/dailycheckin:latest  . --push
+	docker buildx build --platform=linux/arm64,linux/amd64 -t ghcr.io/byterax/dailycheckin_plus:latest -f Dockerfile .. --push
 
 build:
 	docker-compose build --no-cache

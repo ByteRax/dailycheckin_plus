@@ -1,7 +1,12 @@
-# This workflow will upload a Python Package using Twine when a release is published
-# For more information see: https://packaging.python.org/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
+# Refs: T-A07 task 4.
+# Fork note: the PyPI project `dailycheckin` is owned by upstream Sitoi, so this
+# fork cannot publish it. This workflow no longer uploads to PyPI; it builds the
+# sdist + wheel and attaches them to the GitHub Release instead. Install from
+# source with:
+#   pip install "dailycheckin @ git+https://github.com/ByteRax/dailycheckin_plus@<tag>"
+# Versioning is unchanged (dailycheckin/__version__.py via setup.py).
 
-name: Upload Release to PyPi
+name: Build and Attach Release Assets
 
 on:
   release:
@@ -11,11 +16,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-
-    environment:
-      name: pypi
-      url: https://pypi.org/p/dailycheckin
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -30,8 +31,7 @@ jobs:
       - name: Build a binary wheel and a source tarball
         run: python -m build --sdist --wheel --outdir dist/ .
 
-      - name: Publish distribution 📦 to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-            skip-existing: true
-        #   password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Upload dist to the GitHub Release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${GITHUB_REF_NAME}" dist/* --clobber

@@ -1,0 +1,21 @@
+# Refs: T-A07 task 1. Build context is the repo root; the image only needs the Python packaging
+# inputs (requirements.txt, setup.py, pyproject.toml, README.md, dailycheckin/, docker/start.sh).
+# Replaces the old docker/.dockerignore that applied when the context was the docker/ subdirectory.
+.git
+.github
+.maintenance
+.worktrees
+.venv
+.ruff_cache
+docs
+tests
+dist
+build
+dailycheckin.egg-info
+config.json
+config
+logs
+node_modules
+__pycache__
+*.pyc
+.DS_Store
