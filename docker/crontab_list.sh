@@ -1,6 +1,5 @@
 ##############默认任务##############
-# 每 12 小时更新 Pipy 包，如果不需要更新 pypi 包请注释掉下面这行
-0 */12 * * * echo "定时任务更新依赖..." && pip install dailycheckin --upgrade --user >> /dailycheckin/logs/update-pypi.log 2>&1
+# fork 镜像固定源码版本，升级 = 拉新镜像（原每 12 小时 PyPI 自动升级任务已移除）
 # 每天的 23:50 分清理一次日志
 50 23 */2 * * rm -rf /dailycheckin/logs/*.log
 
