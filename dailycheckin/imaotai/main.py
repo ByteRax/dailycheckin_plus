@@ -13,7 +13,7 @@ from dailycheckin import CheckIn
 
 
 class ImaotaiAPIError(Exception):
-    """上游接口整体失效（如 shop/list v3 下线）的硬失败，main() 需透传为账号失败。"""
+    """上游接口整体失效(如 shop/list v3 下线)的硬失败,main() 需透传为账号失败。"""
 
 
 class Encrypt:

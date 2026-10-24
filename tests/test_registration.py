@@ -1,7 +1,7 @@
-"""基线特征测试：服务注册表 checkin_map。
+"""基线特征测试:服务注册表 checkin_map。
 
-锁定 `import dailycheckin` 后的注册结果：16 个服务，值为 (显示名, 类) 二元组。
-对应实现：dailycheckin/__init__.py（pkgutil 自动发现）与 dailycheckin/configs.py 的 checkin_map。
+锁定 `import dailycheckin` 后的注册结果:16 个服务,值为 (显示名, 类) 二元组。
+对应实现:dailycheckin/__init__.py(pkgutil 自动发现)与 dailycheckin/configs.py 的 checkin_map。
 """
 
 import dailycheckin

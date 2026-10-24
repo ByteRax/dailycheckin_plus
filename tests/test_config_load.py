@@ -1,13 +1,13 @@
-"""基线特征测试：config.json 加载行为。
+"""基线特征测试:config.json 加载行为。
 
-锁定 dailycheckin/main.py 的 check_config()（main.py:21-63）真实行为：
-- 正常加载：多账号 list 结构，服务键小写化输出，通知键小写化输出
-- 文件缺失：checkin() 友好退出（打印提示，不抛未捕获异常）
-- JSON 损坏：同理友好退出
-- 模板占位（"xxxxxx" / "多账号"）账号被过滤；配置键大小写敏感（必须大写）
+锁定 dailycheckin/main.py 的 check_config()(main.py:21-63)真实行为:
+- 正常加载:多账号 list 结构,服务键小写化输出,通知键小写化输出
+- 文件缺失:checkin() 友好退出(打印提示,不抛未捕获异常)
+- JSON 损坏:同理友好退出
+- 模板占位("xxxxxx" / "多账号")账号被过滤;配置键大小写敏感(必须大写)
 
-测试全部离线：只调用配置解析路径，不触发任何签到服务与网络请求。
-注意 checkin() 内部 parse_arguments() 读取 sys.argv，测试中必须替换为干净 argv。
+测试全部离线:只调用配置解析路径,不触发任何签到服务与网络请求。
+注意 checkin() 内部 parse_arguments() 读取 sys.argv,测试中必须替换为干净 argv。
 """
 
 import json

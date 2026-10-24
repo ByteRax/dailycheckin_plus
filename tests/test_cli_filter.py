@@ -1,10 +1,10 @@
-"""基线特征测试：--include / --exclude 过滤逻辑。
+"""基线特征测试:--include / --exclude 过滤逻辑。
 
-过滤逻辑内联在 dailycheckin/main.py:checkin()（main.py:70-81）中，无法单独调用，
-且带有效配置直接调用 checkin() 会执行真实签到任务（联网）。因此按计划采用替代策略：
-1. parse_arguments() 可直接调用，做真正的单元测试；
-2. include/exclude 的核心语义（未知服务名剔除 + 集合差）按 main.py:73-81 的原式
-   复算出 task_list，再驱动可离线调用的 check_config(task_list)，验证
+过滤逻辑内联在 dailycheckin/main.py:checkin()(main.py:70-81)中,无法单独调用,
+且带有效配置直接调用 checkin() 会执行真实签到任务(联网)。因此按计划采用替代策略:
+1. parse_arguments() 可直接调用,做真正的单元测试;
+2. include/exclude 的核心语义(未知服务名剔除 + 集合差)按 main.py:73-81 的原式
+   复算出 task_list,再驱动可离线调用的 check_config(task_list),验证
    「checkin_map 键名集合与配置键的交集」行为。不为测试修改产品代码。
 """
 
@@ -24,9 +24,7 @@ CONFIG_WITH_TWO_SERVICES = {
 
 @pytest.fixture
 def config_two_services(tmp_path, monkeypatch):
-    (tmp_path / "config.json").write_text(
-        json.dumps(CONFIG_WITH_TWO_SERVICES, ensure_ascii=False), encoding="utf-8"
-    )
+    (tmp_path / "config.json").write_text(json.dumps(CONFIG_WITH_TWO_SERVICES, ensure_ascii=False), encoding="utf-8")
     monkeypatch.chdir(tmp_path)
 
 

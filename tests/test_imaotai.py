@@ -8,7 +8,7 @@
 import pytest
 
 import dailycheckin.imaotai.main as imaotai_module
-from dailycheckin.imaotai.main import IMAOTAI
+from dailycheckin.imaotai.main import IMAOTAI, ImaotaiAPIError
 
 NOSUCHKEY_BODY = (
     '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -88,7 +88,6 @@ def test_main_reraises_imaotai_api_error(monkeypatch):
     monkeypatch.setattr(obj, "get_map", lambda **kw: ({}, {}))
     monkeypatch.setattr(obj, "get_current_session_id", lambda: None)
     monkeypatch.setattr(obj, "init_headers", lambda **kw: None)
-    from dailycheckin.imaotai.main import ImaotaiAPIError
 
     def _raise(**kw):
         raise ImaotaiAPIError("门店列表接口已失效（疑似上游升级 v4），等待适配")
