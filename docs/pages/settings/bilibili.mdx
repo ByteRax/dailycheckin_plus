@@ -34,7 +34,27 @@ import CardList from '../../components/CardList'
 |   _**BILIBILI**_.cookie    |                                                           Bilibili cookie                                                            |
 |  _**BILIBILI**_.coin_num   |                                                        Bilibili 每日投币数量                                                         |
 |  _**BILIBILI**_.coin_type  | Bilibili 投币方式 默认为 0 ；1: 为关注用户列表视频投币 0: 为随机投币。如果关注用户发布的视频不足配置的投币数，则剩余部分使用随机投币 |
-| _**BILIBILI**_.silver2coin |                                           Bilibili 是否开启银瓜子换硬币，默认为 True 开启                                            |
+| _**BILIBILI**_.silver2coin |                                           Bilibili 是否开启银瓜子换硬币，当前模板默认关闭                                            |
+
+### 扩展任务
+
+`tasks` 下新增的高副作用任务默认关闭；现有每日签到、漫画/直播签到和会员权益任务保持原有行为。打开某项前请先填写对应参数。
+
+| 配置项 | 作用与限制 |
+| --- | --- |
+| `tasks.daily` | 控制日常经验任务、观看进度上报和分享；默认保持现有行为。投币数量仍由顶层 `coin_num` 控制。 |
+| `tasks.manga_sign`、`tasks.live_sign` | 分别控制漫画签到和直播签到；默认保持现有行为。 |
+| `tasks.manga_read` | 漫画阅读记录。启用后必须设置 `comic_id` 和 `episode_id`。 |
+| `tasks.manga_privilege` | 领取大会员漫画权益；可通过 `reason_ids` 指定权益编号。 |
+| `tasks.vip_privilege` | 领取符合条件的月度大会员福利；默认沿用现有行为，可设置 `enabled: false` 关闭。 |
+| `tasks.vip_big_point` | 大会员积分签到。`bonus_missions`、`daily_missions` 和 `experience_task` 可单独启用；剧集任务需填写 `view_bangumi_ssids`。 |
+| `tasks.silver2coin` | 兑换银瓜子前先检查钱包剩余兑换次数；成功后只提交一次。没有 `tasks.silver2coin` 时仍兼容旧的顶层 `silver2coin` 字段。 |
+| `tasks.charge` | 使用 B 币券给指定 UP 主充电。必须提供 `target_up_id`、`amount` 和 `max_amount`，且金额不得超过可用券余额或上限；不会使用默认收款人或生成随机留言。 |
+| `tasks.live_lottery` | 扫描限定数量的直播间并参加符合过滤条件的免费抽奖。`max_rooms` 和 `max_joins` 必须显式设置；要求关注的抽奖和自动分组默认关闭。 |
+| `tasks.unfollow_batched` | 对指定关注分组批量取关，硬上限为 20 人；必须设置分组名和数量，并可用 `retain_uids` 保留指定 UID。 |
+| `tasks.live_fans_medal` | 仅处理 `anchor_uids` 白名单中的粉丝牌。点赞最多 5000 次、弹幕最多 20 条、观看心跳最多 15 分钟；各数量默认是 0。可设置 `danmaku_only_when_offline` 限制只在主播离线时发弹幕。 |
+
+扫码登录属于手动授权流程；定时任务只检查登录状态，不会自动生成二维码或刷新账号凭据。扩展任务逐项记录结果，单项失败不会阻止后续扩展任务。
 
 ## 获取方式
 

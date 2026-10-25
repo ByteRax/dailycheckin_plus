@@ -6,6 +6,7 @@ import time
 import requests
 
 from dailycheckin import CheckIn
+from dailycheckin.bilibili.tasks import BiliBiliTasks
 
 
 class BiliBili(CheckIn):
@@ -108,8 +109,8 @@ class BiliBili(CheckIn):
         receive_type int 权益类型 1为B币劵 2为优惠券
         """
         url = "https://api.bilibili.com/x/vip/privilege/receive"
-        post_data = {"type": receive_type, "csrf": bili_jct}
-        ret = session.post(url=url, data=post_data).json()
+        params = {"type": receive_type, "csrf": bili_jct}
+        ret = session.post(url=url, params=params, timeout=20, verify=True).json()
         return ret
 
     @staticmethod
@@ -127,7 +128,7 @@ class BiliBili(CheckIn):
         cid int 视频cid号
         progres int 观看秒数
         """
-        url = "http://api.bilibili.com/x/v2/history/report"
+        url = "https://api.bilibili.com/x/v2/history/report"
         post_data = {"aid": aid, "cid": cid, "progres": progres, "csrf": bili_jct}
         ret = session.post(url=url, data=post_data).json()
         return ret
@@ -293,57 +294,89 @@ class BiliBili(CheckIn):
         ]
         return data_list
 
-    @staticmethod
-    def silver2coin(session, bili_jct) -> dict:
-        """B站银瓜子换硬币"""
-        url = "https://api.live.bilibili.com/xlive/revenue/v1/wallet/silver2coin"
-        post_data = {"csrf": bili_jct}
-        ret = session.post(url=url, data=post_data).json()
-        return ret
-
     def main(self):
-        bilibili_cookie = {item.split("=")[0]: item.split("=")[1] for item in self.check_item.get("cookie").split("; ")}
+        bilibili_cookie = {
+            key: value
+            for item in self.check_item.get("cookie", "").split("; ")
+            if "=" in item
+            for key, value in [item.split("=", 1)]
+        }
         bili_jct = bilibili_cookie.get("bili_jct")
         coin_num = self.check_item.get("coin_num", 0)
         coin_type = self.check_item.get("coin_type", 1)
-        silver2coin = self.check_item.get("silver2coin", False)
         session = requests.session()
         requests.utils.add_dict_to_cookiejar(session.cookies, bilibili_cookie)
         session.headers.update(
             {
-                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                "user-agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+                ),
                 "Referer": "https://www.bilibili.com/",
                 "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
                 "Connection": "keep-alive",
             }
         )
+        tasks_config = self.check_item.get("tasks", {})
+        if not isinstance(tasks_config, dict):
+            tasks_config = {}
+        daily_config = tasks_config.get("daily", {})
+        manga_sign_config = tasks_config.get("manga_sign", {})
+        live_sign_config = tasks_config.get("live_sign", {})
+        if not isinstance(daily_config, dict):
+            daily_config = {}
+        if not isinstance(manga_sign_config, dict):
+            manga_sign_config = {}
+        if not isinstance(live_sign_config, dict):
+            live_sign_config = {}
+        daily_enabled = bool(daily_config.get("enabled", True))
+        watch_video_enabled = daily_enabled and bool(daily_config.get("watch_video", True))
+        share_video_enabled = daily_enabled and bool(daily_config.get("share_video", True))
+        if not daily_enabled:
+            coin_num = 0
         success_count = 0
         uname, uid, is_login, coin, vip_type, current_exp = self.get_nav(session=session)
         if is_login:
-            manhua_msg = self.manga_sign(session=session)
-            live_msg = self.live_sign(session=session)
-            aid_list = self.get_region(session=session)
+            optional_task_results = BiliBiliTasks(
+                session=session,
+                cookie=bilibili_cookie,
+                account=self.check_item,
+            ).run()
+            manhua_msg = self.manga_sign(session=session) if manga_sign_config.get("enabled", True) else "已关闭"
+            live_msg = self.live_sign(session=session) if live_sign_config.get("enabled", True) else "已关闭"
+            aid_list = self.get_region(session=session) if daily_enabled else []
             vip_privilege_my_ret = self.vip_privilege_my(session=session)
             welfare_list = (vip_privilege_my_ret.get("data") or {}).get("list") or []
+            task_config = tasks_config
+            vip_privilege_config = task_config.get("vip_privilege", {}) if isinstance(task_config, dict) else {}
+            if not isinstance(vip_privilege_config, dict):
+                vip_privilege_config = {}
+            if not vip_privilege_config.get("enabled", True):
+                welfare_list = []
             for welfare in welfare_list:
                 if welfare.get("state") == 0 and welfare.get("vip_type") == vip_type:
-                    vip_privilege_receive_ret = self.vip_privilege_receive(
-                        session=session,
-                        bili_jct=bili_jct,
-                        receive_type=welfare.get("type"),
-                    )
-                    print(vip_privilege_receive_ret)
-            coins_av_count = len(
-                list(
-                    filter(
-                        lambda x: x["reason"] == "视频投币奖励",
-                        self.get_today_exp(session=session),
+                    try:
+                        vip_privilege_receive_ret = self.vip_privilege_receive(
+                            session=session,
+                            bili_jct=bili_jct,
+                            receive_type=welfare.get("type"),
+                        )
+                        print("月度会员权益领取=" + ("成功" if vip_privilege_receive_ret.get("code") == 0 else "失败"))
+                    except Exception as error:
+                        print("月度会员权益领取失败=" + type(error).__name__)
+            coins_av_count = 0
+            if daily_enabled:
+                coins_av_count = len(
+                    list(
+                        filter(
+                            lambda x: x["reason"] == "视频投币奖励",
+                            self.get_today_exp(session=session),
+                        )
                     )
                 )
-            )
             coin_num = coin_num - coins_av_count
             coin_num = coin_num if coin_num < coin else coin
-            if coin_type == 1:
+            if coin_type == 1 and coin_num > 0:
                 following_list = self.get_followings(session=session, uid=uid)
                 count = 0
                 for following in (following_list.get("data") or {}).get("list") or []:
@@ -359,7 +392,9 @@ class BiliBili(CheckIn):
                     aid_list += self.get_region(session=session)
                 for one in aid_list[::-1]:
                     print(one)
-            if coin_num > 0:
+            if not daily_enabled:
+                coin_msg = "已关闭"
+            elif coin_num > 0:
                 for aid in aid_list[::-1]:
                     ret = self.coin_add(session=session, aid=aid.get("aid"), bili_jct=bili_jct)
                     if ret["code"] == 0:
@@ -380,32 +415,37 @@ class BiliBili(CheckIn):
                 coin_msg = f"今日成功投币{success_count + coins_av_count}/{self.check_item.get('coin_num', 5)}个"
             else:
                 coin_msg = f"今日成功投币{coins_av_count}/{self.check_item.get('coin_num', 5)}个"
-            if not aid_list:
+            if not daily_enabled:
+                report_msg = "已关闭"
+                share_msg = "已关闭"
+            elif not aid_list:
                 report_msg = "任务失败(无可用视频)"
                 share_msg = "任务失败(无可用视频)"
             else:
                 aid = aid_list[0].get("aid")
                 cid = aid_list[0].get("cid")
                 title = aid_list[0].get("title")
-                report_ret = self.report_task(session=session, bili_jct=bili_jct, aid=aid, cid=cid)
-                if report_ret.get("code") == 0:
-                    report_msg = f"观看《{title}》300秒"
+                if watch_video_enabled:
+                    report_ret = self.report_task(session=session, bili_jct=bili_jct, aid=aid, cid=cid)
+                    if report_ret.get("code") == 0:
+                        report_msg = f"观看《{title}》300秒"
+                    else:
+                        report_msg = "任务失败"
                 else:
-                    report_msg = "任务失败"
-                share_ret = self.share_task(session=session, bili_jct=bili_jct, aid=aid)
-                if share_ret.get("code") == 0:
-                    share_msg = f"分享《{title}》成功"
+                    report_msg = "已关闭"
+                if share_video_enabled:
+                    share_ret = self.share_task(session=session, bili_jct=bili_jct, aid=aid)
+                    if share_ret.get("code") == 0:
+                        share_msg = f"分享《{title}》成功"
+                    else:
+                        share_msg = "分享失败"
+                        print(share_msg)
                 else:
-                    share_msg = "分享失败"
-                    print(share_msg)
-            s2c_msg = "不兑换硬币"
-            if silver2coin:
-                silver2coin_ret = self.silver2coin(session=session, bili_jct=bili_jct)
-                s2c_msg = silver2coin_ret["message"]
-                if silver2coin_ret["code"] != 0:
-                    print(s2c_msg)
-                else:
-                    s2c_msg = ""
+                    share_msg = "已关闭"
+            s2c_msg = "不兑换硬币；如需兑换请在 tasks.silver2coin 中显式启用"
+            for task_result in optional_task_results:
+                if task_result.startswith("银瓜子兑换:"):
+                    s2c_msg = task_result.split(":", 1)[1].strip()
             live_stats = self.live_status(session=session)
             uname, uid, is_login, new_coin, vip_type, new_current_exp = self.get_nav(session=session)
             today_exp = sum(map(lambda x: x["delta"], self.get_today_exp(session=session)))
@@ -423,6 +463,7 @@ class BiliBili(CheckIn):
                 {"name": "当前经验", "value": new_current_exp},
                 {"name": "升级还需", "value": f"{update_data}天"},
                 *live_stats,
+                *[{"name": "扩展任务", "value": item} for item in optional_task_results],
             ]
             msg = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg])
             return msg
