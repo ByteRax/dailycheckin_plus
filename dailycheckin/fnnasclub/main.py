@@ -14,6 +14,7 @@ class _FnNasPageParser(HTMLParser):
     def __init__(self):
         super().__init__()
         self.sign_param = ""
+        self.sign_status = "unknown"
         self._anchor = None
         self._anchor_text = []
         self._heading_seen = False
@@ -33,8 +34,12 @@ class _FnNasPageParser(HTMLParser):
             query = parse_qs(urlparse(self._anchor).query)
             sign = query.get("sign", [""])[0]
             text = "".join(self._anchor_text).strip()
-            if query.get("id") == ["zqlj_sign"] and sign and text in {"点击打卡", "今日已打卡"}:
+            if query.get("id") == ["zqlj_sign"] and sign:
                 self.sign_param = sign
+                if text == "今日已打卡":
+                    self.sign_status = "already_signed"
+                elif text == "点击打卡":
+                    self.sign_status = "ready"
             self._anchor = None
             self._anchor_text = []
         elif tag == "li" and self._li_text is not None:
@@ -59,8 +64,8 @@ class FnNasClub(CheckIn):
         self.check_item = check_item
 
     @staticmethod
-    def get_sign_param_from_page(session):
-        """GET 签到页面并提取 sign"""
+    def get_sign_state_from_page(session):
+        """GET 签到页面并读取签到按钮状态, 不提交签到请求。"""
         response = session.get("https://club.fnnas.com/plugin.php?id=zqlj_sign", timeout=15)
         response.raise_for_status()
         tengine_error = response.headers.get("X-Tengine-Error")
@@ -71,7 +76,13 @@ class FnNasClub(CheckIn):
         parser.feed(response.text)
         if not parser.sign_param:
             raise RuntimeError("未匹配到有效签到按钮或 sign 参数")
-        return parser.sign_param
+        return parser.sign_param, parser.sign_status
+
+    @staticmethod
+    def get_sign_param_from_page(session):
+        """兼容旧调用: 仅返回签到参数。"""
+        sign_param, _ = FnNasClub.get_sign_state_from_page(session)
+        return sign_param
 
     @staticmethod
     def sign(session, sign_param):
@@ -80,11 +91,23 @@ class FnNasClub(CheckIn):
         response = session.get(f"https://club.fnnas.com/plugin.php?id=zqlj_sign&sign={sign_param}", timeout=15)
         response.raise_for_status()
         html = response.text
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = None
+        if isinstance(payload, dict):
+            if payload.get("success"):
+                return [{"name": "签到结果", "value": payload.get("message", "签到成功")}]
+            message = str(payload.get("message") or payload.get("msg") or "")
+            if any(text in message for text in ("您今天已经打过卡", "今日已打卡", "已经签到")):
+                return [{"name": "签到结果", "value": "您已签到，请勿重复签到"}]
+            if message:
+                return [{"name": "签到结果", "value": f"签到失败，HTTP {response.status_code}"}]
         if "恭喜您，打卡成功！" in html:
             return [{"name": "签到结果", "value": "签到成功"}]
-        if "您今天已经打过卡了，请勿重复操作！" in html:
+        if any(text in html for text in ("您今天已经打过卡", "今日已打卡", "已经签到")):
             return [{"name": "签到结果", "value": "您已签到，请勿重复签到"}]
-        raise RuntimeError("签到接口返回未知响应")
+        return [{"name": "签到结果", "value": f"签到异常：HTTP {response.status_code}，响应未识别"}]
 
     @staticmethod
     def get_info(session):
@@ -118,9 +141,23 @@ class FnNasClub(CheckIn):
                 "Cookie": cookie,
             }
         )
-        sign_param = self.get_sign_param_from_page(session=session)
-        msg = self.sign(session=session, sign_param=sign_param)
-        msg += self.get_info(session=session)
+        try:
+            sign_param, sign_status = self.get_sign_state_from_page(session=session)
+        except Exception as error:
+            return f"恩山签到失败：获取签到状态异常（{type(error).__name__}）"
+        if sign_status == "already_signed":
+            msg = [{"name": "签到结果", "value": "您已签到，请勿重复签到"}]
+        elif sign_status == "ready":
+            try:
+                msg = self.sign(session=session, sign_param=sign_param)
+            except Exception as error:
+                msg = [{"name": "签到结果", "value": f"签到失败（{type(error).__name__}）"}]
+        else:
+            msg = [{"name": "签到结果", "value": "签到状态无法识别，未提交签到请求"}]
+        try:
+            msg += self.get_info(session=session)
+        except Exception as error:
+            msg.append({"name": "账户信息", "value": f"获取失败（{type(error).__name__}）"})
         msg = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg])
         return msg
 
