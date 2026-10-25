@@ -65,6 +65,9 @@
 | 🟢️  | IMAOTAI   | i 茅台                                                     | 25.09.28 | 申购生肖茅台                                                                 |
 | 🟤   | MIMOTION  | 小米运动                                                   | 25.09.28 | 每日小米运动刷步数                                                           |
 | 🟢️  | BAIDU     | [百度站点](https://ziyuan.baidu.com/site/index#/)          | 25.09.28 | 提交网站页面供百度收录                                                       |
+| 🟡   | NIU       | [小牛电动](https://www.niu.com/)                           | 26.10.25 | 社区分享获取积分（token 自动持久化续期）                                     |
+| 🟡   | QUARK     | [夸克网盘](https://pan.quark.cn/)                          | 26.10.25 | 容量成长签到，每日领取空间奖励                                               |
+| 🟡   | ANYROUTER | [New API 站](https://github.com/QuantumNous/new-api)       | 26.10.25 | New API 系站点（如 [AnyRouter](https://antrouter.top/)）每日签到领取额度     |
 
 ## 💬 通知列表
 
@@ -79,6 +82,11 @@
 - Cool Push（QQ,微信,邮箱）
 - qmsg 酱（QQ）
 - 飞书（飞书）
+- Gotify（自建）
+- Ntfy（自建）
+- WPUSH（微信）
+- xxtui（微信）
+- WXPUSHER（微信）
 
 ## 🤝 参与贡献
 
