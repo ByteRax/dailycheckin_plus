@@ -32,9 +32,9 @@ class IQIYI(CheckIn):
         账号信息查询
         """
         time.sleep(3)
-        url = "http://serv.vip.iqiyi.com/vipgrowth/query.action"
+        url = "https://serv.vip.iqiyi.com/vipgrowth/query.action"
         params = {"P00001": p00001}
-        res = requests.get(url=url, params=params).json()
+        res = requests.get(url=url, params=params, timeout=15, verify=True).json()
         if res["code"] == "A00000":
             try:
                 res_data = res.get("data", {})
@@ -60,7 +60,9 @@ class IQIYI(CheckIn):
             ]
         return msg
 
-    def lottery(self, p00001, award_list=[]):
+    def lottery(self, p00001, award_list=None):
+        if award_list is None:
+            award_list = []
         url = "https://act.vip.iqiyi.com/shake-api/lottery"
         params = {
             "P00001": p00001,
@@ -84,21 +86,24 @@ class IQIYI(CheckIn):
                 }
             ),
         }
-        res = requests.get(url, params=params).json()
-        msgs = []
-        if res.get("code") == "A00000":
-            award_info = res.get("data", {}).get("title")
-            award_list.append(award_info)
-            time.sleep(3)
-            return self.lottery(p00001=p00001, award_list=award_list)
-        elif res.get("msg") == "抽奖次数用完":
-            if award_list:
-                msgs = [{"name": "每天摇一摇", "value": "、".join(award_list)}]
-            else:
-                msgs = [{"name": "每天摇一摇", "value": res.get("msg")}]
-        else:
-            msgs = [{"name": "每天摇一摇", "value": res.get("msg")}]
-        return msgs
+        last_message = "抽奖次数用完"
+        for attempt in range(10):
+            res = requests.get(url, params=params, timeout=15).json()
+            if res.get("code") == "A00000":
+                award_info = res.get("data", {}).get("title")
+                if award_info:
+                    award_list.append(award_info)
+                last_message = "抽奖次数用完"
+                time.sleep(3)
+                continue
+            last_message = str(res.get("msg", "抽奖失败"))
+            break
+        if award_list:
+            value = "、".join(award_list)
+            if last_message == "抽奖次数用完" and len(award_list) == 10:
+                value += "（已达到单次保护上限，剩余机会留待下次）"
+            return [{"name": "每天摇一摇", "value": value}]
+        return [{"name": "每天摇一摇", "value": last_message}]
 
     @staticmethod
     def draw(draw_type, p00001, p00003):
@@ -128,7 +133,7 @@ class IQIYI(CheckIn):
         }
         if draw_type == 1:
             del params["lottery_chance"]
-        res = requests.get(url=url, params=params).json()
+        res = requests.get(url=url, params=params, timeout=15).json()
         if not res.get("code"):
             chance = int(res.get("daysurpluschance"))
             msg = res.get("awardName")
@@ -156,7 +161,7 @@ class IQIYI(CheckIn):
                 "timesCode": times_code,
                 "P00001": p00001,
             }
-            requests.get(url, params=params)
+            requests.get(url, params=params, timeout=15)
 
     def lotto_lottery(self, p00001):
         self.give_times(p00001=p00001)
@@ -164,7 +169,7 @@ class IQIYI(CheckIn):
         for _ in range(5):
             url = "https://pcell.iqiyi.com/lotto/lottery"
             params = {"actCode": "bcf9d354bc9f677c", "P00001": p00001}
-            response = requests.get(url, params=params)
+            response = requests.get(url, params=params, timeout=15)
             gift_name = response.json()["data"]["giftName"]
             if gift_name and "未中奖" not in gift_name:
                 gift_list.append(gift_name)
@@ -199,9 +204,12 @@ class IQIYI(CheckIn):
         lottery_msgs = self.lottery(p00001=p00001, award_list=[])
         if chance:
             draw_msg = ""
-            for _ in range(chance):
+            draw_count = min(int(chance), 10)
+            for _ in range(draw_count):
                 ret = self.draw(draw_type=1, p00001=p00001, p00003=p00003)
                 draw_msg += ret["msg"] + ";" if ret["status"] else ""
+            if int(chance) > draw_count:
+                draw_msg += "剩余机会因单次保护上限未使用"
         else:
             draw_msg = "抽奖机会不足"
 
