@@ -1,9 +1,55 @@
 import json
 import os
-import re
+from html.parser import HTMLParser
+from urllib.parse import parse_qs, urlparse
+
 import requests
 
 from dailycheckin import CheckIn
+
+
+class _FnNasPageParser(HTMLParser):
+    """Extract the small amount of state needed from the sign-in page."""
+
+    def __init__(self):
+        super().__init__()
+        self.sign_param = ""
+        self._anchor = None
+        self._anchor_text = []
+        self._heading_seen = False
+        self._li_text = None
+        self.info_lines = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == "a":
+            self._anchor = attrs.get("href", "")
+            self._anchor_text = []
+        elif tag == "li" and self._heading_seen:
+            self._li_text = []
+
+    def handle_endtag(self, tag):
+        if tag == "a" and self._anchor is not None:
+            query = parse_qs(urlparse(self._anchor).query)
+            sign = query.get("sign", [""])[0]
+            text = "".join(self._anchor_text).strip()
+            if query.get("id") == ["zqlj_sign"] and sign and text in {"点击打卡", "今日已打卡"}:
+                self.sign_param = sign
+            self._anchor = None
+            self._anchor_text = []
+        elif tag == "li" and self._li_text is not None:
+            line = "".join(self._li_text).strip()
+            if line:
+                self.info_lines.append(line)
+            self._li_text = None
+
+    def handle_data(self, data):
+        if "我的打卡动态" in data:
+            self._heading_seen = True
+        if self._anchor is not None:
+            self._anchor_text.append(data)
+        if self._li_text is not None:
+            self._li_text.append(data)
 
 
 class FnNasClub(CheckIn):
@@ -17,132 +63,47 @@ class FnNasClub(CheckIn):
         """GET 签到页面并提取 sign"""
         response = session.get("https://club.fnnas.com/plugin.php?id=zqlj_sign", timeout=15)
         response.raise_for_status()
-        try:
-            html = response.text
-            # 匹配签到按钮，抓取sign参数
-            r_sign_btn = re.compile(r'<a href="plugin.php\?id=zqlj_sign&sign=([0-9a-fA-F]+)" class="btna">点击打卡</a>')
-            r_signed_btn = re.compile(
-                r'<a href="plugin.php\?id=zqlj_sign&sign=([0-9a-fA-F]+)" class="btna">今日已打卡</a>'
-            )
-            match = r_sign_btn.search(html)
-            match_signed = r_signed_btn.search(html)
-            sign_param = ""
-            if match:
-                # 匹配成功，取出sign参数
-                sign_param = match.group(1)
-            elif match_signed:
-                # 匹配成功，取出sign参数
-                sign_param = match_signed.group(1)
+        tengine_error = response.headers.get("X-Tengine-Error")
+        if tengine_error:
+            raise RuntimeError("飞牛论坛返回了拦截页面，未获取到有效签到页面")
 
-            return sign_param
-        except Exception as e:
-            print(f"status_code: {response.status_code}, text: {response.text[:2000]}, exception: {e}")
-        return None
+        parser = _FnNasPageParser()
+        parser.feed(response.text)
+        if not parser.sign_param:
+            raise RuntimeError("未匹配到有效签到按钮或 sign 参数")
+        return parser.sign_param
 
     @staticmethod
     def sign(session, sign_param):
         if not sign_param:
-            msg = [
-                {
-                    "name": "签到结果",
-                    "value": "签到失败，未能成功获取sign参数",
-                }
-            ]
-            return msg
+            raise RuntimeError("签到失败，未能成功获取 sign 参数")
         response = session.get(f"https://club.fnnas.com/plugin.php?id=zqlj_sign&sign={sign_param}", timeout=15)
-        try:
-            html = response.text
-            # 匹配到 恭喜您，打卡成功！ 证明打卡成功
-            if re.search(r"恭喜您，打卡成功！", html):
-                msg = [
-                    {
-                        "name": "签到结果",
-                        "value": "签到成功",
-                    }
-                ]
-            elif re.search(r"您今天已经打过卡了，请勿重复操作！", html):
-                msg = [
-                    {
-                        "name": "签到结果",
-                        "value": "您已签到，请勿重复签到",
-                    }
-                ]
-            else:
-                msg = [
-                    {
-                        "name": "签到结果",
-                        "value": "未知签到异常",
-                    }
-                ]
-        except Exception as e:
-            msg = [
-                {
-                    "name": "签到结果",
-                    "value": f"签到异常，Exception: {e}, Status Code: {response.status_code}",
-                }
-            ]
-            # print(f'status_code: {response.status_code}, text: {response.text[:2000]}')
-        return msg
+        response.raise_for_status()
+        html = response.text
+        if "恭喜您，打卡成功！" in html:
+            return [{"name": "签到结果", "value": "签到成功"}]
+        if "您今天已经打过卡了，请勿重复操作！" in html:
+            return [{"name": "签到结果", "value": "您已签到，请勿重复签到"}]
+        raise RuntimeError("签到接口返回未知响应")
 
     @staticmethod
     def get_info(session):
         msg = []
         response = session.get("https://club.fnnas.com/plugin.php?id=zqlj_sign", timeout=15)
         response.raise_for_status()
-
-        try:
-            html = response.text
-            # 1. 匹配“我的打卡动态”这一整块 HTML
-            pattern = re.compile(
-                r"<strong>\s*我的打卡动态\s*</strong>"  # strong 标题
-                r".*?"  # 任意内容（非贪婪）
-                r'<div[^>]*class="bm_c"[^>]*>.*?</div>',  # div.bm_c 完整区块
-                re.S,
-            )
-
-            m = pattern.search(html)
-            if not m:
-                raise RuntimeError("没匹配到 “我的打卡动态” 这一段 HTML")
-
-            block_html = m.group(0)
-
-            # 2. 保证每个 <li> 独立一行
-            block_html = re.sub(r"</li\s*>", "</li>\n", block_html)
-
-            # 3. 去掉所有 HTML 标签
-            text = re.sub(r"<[^>]+>", "", block_html)
-
-            # 4. 这里直接把“我的打卡动态”整个从文本里删除
-            text = text.replace("我的打卡动态", "")
-
-            # 5. 按行切分并清理空白
-            lines = [line.strip() for line in text.splitlines() if line.strip()]
-
-            # 6. 分割冒号并生成 msg 列表
-            for line in lines:
-                # 兼容全角“：”和半角“:”
-                if "：" in line:
-                    sep = "："
-                elif ":" in line:
-                    sep = ":"
-                else:
-                    continue
-
-                name, value = line.split(sep, 1)
-                msg.append(
-                    {
-                        "name": name.strip(),
-                        "value": value.strip(),
-                    }
-                )
-
-        except Exception as e:
-            msg = [
-                {
-                    "name": "获取打卡动态失败",
-                    "value": str(e),
-                }
-            ]
+        parser = _FnNasPageParser()
+        parser.feed(response.text)
+        if not parser._heading_seen:
+            raise RuntimeError("没匹配到 “我的打卡动态” 这一段 HTML")
+        for line in parser.info_lines:
+            if "：" in line:
+                sep = "："
+            elif ":" in line:
+                sep = ":"
+            else:
+                continue
+            name, value = line.split(sep, 1)
+            msg.append({"name": name.strip(), "value": value.strip()})
         return msg
 
     def main(self):

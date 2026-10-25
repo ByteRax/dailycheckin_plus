@@ -108,7 +108,11 @@ gcc g++ make libffi-dev openssl-dev
 3. 运行指定脚本（排除），可以同时选择多个，用「空格」分开
    ![定时任务](../img/qinglong/17.png)
 
-## 四、更新
+## 四、常见问题
+
+Debian/Ubuntu 宿主机安装依赖报 `cryptography` 编译失败时，先安装系统依赖再重试：`apt-get install -y gcc libssl-dev python3-dev`（issue #473）。
+
+## 五、更新
 
 添加一个定时任务，名称为 更新Dailycheckin（可自定义），命令为 `task pip3 install dailycheckin --upgrade`，定时规则为 0 0 * * *。
 

@@ -61,6 +61,7 @@ import { Cards, Card } from 'nextra/components'
 ```json filename="config.json" copy
 {
   "FSKEY": "",
+  "FSSECRET": "",
   "MERGE_PUSH": ""
 }
 ```
@@ -68,4 +69,5 @@ import { Cards, Card } from 'nextra/components'
 |       参数       |                                           说明                                            |
 | :--------------: | :---------------------------------------------------------------------------------------: |
 |   _**FSKEY**_    | `https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxx` **xxxxxx** 部分就是需要填写的 FSKEY |
+|  _**FSSECRET**_  |          可选，机器人开启了「签名校验」时填写签名密钥，自动附加 timestamp 与签名            |
 | _**MERGE_PUSH**_ |                       **true**: 将推送消息合并；**false**: 分开推送                       |

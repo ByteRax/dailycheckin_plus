@@ -68,6 +68,8 @@ import { Callout } from 'nextra/components'
 {
   "QMSG_KEY": "",
   "QMSG_TYPE": "",
+  "QMSG_URL": "",
+  "QMSG_QQ": "",
   "MERGE_PUSH": ""
 }
 ```
@@ -76,4 +78,6 @@ import { Callout } from 'nextra/components'
 | :--------------: | :--------------------------------------------------------------------------------------------: |
 |  _**QMSG_KEY**_  |              Qmsg 酱推送[官方文档](https://qmsg.zendee.cn/) ,填写 `KEY` 代码即可               |
 | _**QMSG_TYPE**_  | Qmsg 酱推送[官方文档](https://qmsg.zendee.cn/) ,如果需要推送到群填写 `group`,其他的都推送到 QQ |
+|  _**QMSG_URL**_  |          可选，私有云部署地址（默认公共云 `https://qmsg.zendee.cn`），填私有云 base URL          |
+|  _**QMSG_QQ**_   |                       可选，指定接收消息的 QQ 号（管理员号可给其他 QQ 推送）                      |
 | _**MERGE_PUSH**_ |                         **true**: 将推送消息合并；**false**: 分开推送                          |

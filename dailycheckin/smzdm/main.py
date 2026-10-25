@@ -37,7 +37,9 @@ class SMZDM(CheckIn):
         }
         html = requests.post(url=url, headers=headers, data=data)
         result = html.json()
-        token = result["data"]["token"]
+        token = (result.get("data") or {}).get("token")
+        if not token:
+            raise RuntimeError(f"获取 robot_token 失败: {result.get('error_msg')}")
         return token
 
     def sign(self, headers, token):
@@ -60,7 +62,7 @@ class SMZDM(CheckIn):
         }
         url = "https://user-api.smzdm.com/checkin"
         resp = requests.post(url=url, headers=headers, data=data)
-        error_msg = resp.json()["error_msg"]
+        error_msg = resp.json().get("error_msg", "未知错误")
         return error_msg, data
 
     def all_reward(self, headers, data):
@@ -68,7 +70,9 @@ class SMZDM(CheckIn):
         resp = requests.post(url=url2, headers=headers, data=data)
         result = resp.json()
         msgs = []
-        if normal_reward := result["data"]["normal_reward"]:
+        # 平台风控/验证码时 data 可能为 None（issue#479/#571），安全取值避免裸下标崩溃
+        normal_reward = (result.get("data") or {}).get("normal_reward")
+        if normal_reward:
             try:
                 msgs = [
                     {
@@ -82,6 +86,8 @@ class SMZDM(CheckIn):
                 ]
             except Exception as e:
                 print(e)
+        else:
+            msgs = [{"name": "签到奖励", "value": f"获取失败: {result.get('error_msg', '响应异常')}"}]
         return msgs
 
     def active(self, cookie):

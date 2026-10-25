@@ -67,11 +67,23 @@ import { Callout } from 'nextra/components'
 ```json filename="config.json" copy
 {
   "BARK_URL": "",
+  "BARK_TITLE": "",
+  "BARK_GROUP": "",
+  "BARK_ICON": "",
+  "BARK_SOUND": "",
+  "BARK_URL_JUMP": "",
   "MERGE_PUSH": ""
 }
 ```
 
-|       参数       |                                              说明                                              |
-| :--------------: | :--------------------------------------------------------------------------------------------: |
-|  _**BARK_URL**_  | [BARK](https://bark.day.app/#/) ,填写 `BARK_URL` 例: `https://api.day.app/DxHcxxxxxRxxxxxxcm/` |
-| _**MERGE_PUSH**_ |                         **true**: 将推送消息合并；**false**: 分开推送                          |
+|        参数        |                                              说明                                               |
+| :----------------: | :-----------------------------------------------------------------------------------------------: |
+|    _**BARK_URL**_    | [BARK](https://bark.day.app/#/) ,填写 `BARK_URL` 例: `https://api.day.app/DxHcxxxxxRxxxxxxcm/` |
+|   _**BARK_TITLE**_   |                            可选，推送标题（默认无，推送第一行为标题）                            |
+|   _**BARK_GROUP**_   |                                可选，推送分组（如 `DailyCheckin`）                                |
+|   _**BARK_ICON**_   |                                       可选，推送图标 URL                                        |
+|  _**BARK_SOUND**_   |                              可选，推送铃声（参考 Bark 官方铃声列表）                              |
+| _**BARK_URL_JUMP**_ |                              可选，点击推送时跳转打开的 URL                                       |
+|  _**MERGE_PUSH**_   |                          **true**: 将推送消息合并；**false**: 分开推送                           |
+
+超长内容会自动按 Bark 单次请求长度限制分批发送。

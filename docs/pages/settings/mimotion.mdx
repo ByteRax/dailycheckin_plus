@@ -32,5 +32,7 @@ import CardList from '../../components/CardList'
 | :---------------------: | :--------------------------------: |
 |  _**MIMOTION**_.phone   | 小米运动刷步数的「手机」或「邮箱」 |
 | _**MIMOTION**_.password |      小米运动刷步数的账号密码      |
+|   _**MIMOTION**_.user   | 可选，华米 userid；配合 app_token 可跳过登录 |
+| _**MIMOTION**_.app_token | 可选，长效 app_token（约 15 天）。留空则每次账密登录；首次成功后程序会自动把 user/app_token 写回 config.json，避免频繁登录触发单 IP 限制 |
 | _**MIMOTION**_.min_step |      小米运动刷步数的最小步数      |
 | _**MIMOTION**_.max_step |      小米运动刷步数的最大步数      |
