@@ -96,13 +96,41 @@
             "coin_num": 0,
             "coin_type": 1,
             "cookie": "_uuid=xxxxxx; rpdid=xxxxxx; LIVE_BUVID=xxxxxx; PVID=xxxxxx; blackside_state=xxxxxx; CURRENT_FNVAL=xxxxxx; buvid3=xxxxxx; fingerprint3=xxxxxx; fingerprint=xxxxxx; buvid_fp=xxxxxx; buvid_fp_plain=xxxxxx; DedeUserID=xxxxxx; DedeUserID__ckMd5=xxxxxx; SESSDATA=xxxxxx; bili_jct=xxxxxx; bsource=xxxxxx; finger=xxxxxx; fingerprint_s=xxxxxx;",
-            "silver2coin": true
+            "silver2coin": false,
+            "tasks": {
+                "daily": {"enabled": true, "watch_video": true, "share_video": true},
+                "manga_sign": {"enabled": true},
+                "live_sign": {"enabled": true},
+                "manga_read": {"enabled": false, "comic_id": 0, "episode_id": 0, "platform": "android"},
+                "manga_privilege": {"enabled": false, "reason_ids": [1]},
+                "vip_privilege": {"enabled": true},
+                "vip_big_point": {"enabled": false, "bonus_missions": false, "daily_missions": false, "experience_task": false, "view_bangumi_ssids": []},
+                "silver2coin": {"enabled": false},
+                "charge": {"enabled": false, "target_up_id": "", "amount": 0, "max_amount": 0, "comment": ""},
+                "live_lottery": {"enabled": false, "max_rooms": 0, "max_joins": 0, "allow_follow_required": false, "auto_group_followings": false, "group_name": "天选时刻", "deny_uids": [], "include_award_names": "", "exclude_award_names": "舰|船|航海|代金券|自拍|写真|提督"},
+                "unfollow_batched": {"enabled": false, "group_name": "", "count": 0, "retain_uids": []},
+                "live_fans_medal": {"enabled": false, "anchor_uids": [], "like_count": 0, "danmaku_count": 0, "danmaku_content": "", "danmaku_only_when_offline": false, "watch_minutes": 0}
+            }
         },
         {
             "coin_num": 0,
             "coin_type": 1,
             "cookie": "多账号 cookie 填写，请参考上面，cookie 以实际获取为准（遇到特殊字符如双引号\" 请加反斜杠转义）",
-            "silver2coin": true
+            "silver2coin": false,
+            "tasks": {
+                "daily": {"enabled": true, "watch_video": true, "share_video": true},
+                "manga_sign": {"enabled": true},
+                "live_sign": {"enabled": true},
+                "manga_read": {"enabled": false, "comic_id": 0, "episode_id": 0, "platform": "android"},
+                "manga_privilege": {"enabled": false, "reason_ids": [1]},
+                "vip_privilege": {"enabled": true},
+                "vip_big_point": {"enabled": false, "bonus_missions": false, "daily_missions": false, "experience_task": false, "view_bangumi_ssids": []},
+                "silver2coin": {"enabled": false},
+                "charge": {"enabled": false, "target_up_id": "", "amount": 0, "max_amount": 0, "comment": ""},
+                "live_lottery": {"enabled": false, "max_rooms": 0, "max_joins": 0, "allow_follow_required": false, "auto_group_followings": false, "group_name": "天选时刻", "deny_uids": [], "include_award_names": "", "exclude_award_names": "舰|船|航海|代金券|自拍|写真|提督"},
+                "unfollow_batched": {"enabled": false, "group_name": "", "count": 0, "retain_uids": []},
+                "live_fans_medal": {"enabled": false, "anchor_uids": [], "like_count": 0, "danmaku_count": 0, "danmaku_content": "", "danmaku_only_when_offline": false, "watch_minutes": 0}
+            }
         }
     ],
     "ENSHAN": [
