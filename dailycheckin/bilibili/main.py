@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import time
 
 import requests
@@ -17,12 +18,13 @@ class BiliBili(CheckIn):
     def get_nav(session):
         url = "https://api.bilibili.com/x/web-interface/nav"
         ret = session.get(url=url).json()
-        uname = ret.get("data", {}).get("uname")
-        uid = ret.get("data", {}).get("mid")
-        is_login = ret.get("data", {}).get("isLogin")
-        coin = ret.get("data", {}).get("money")
-        vip_type = ret.get("data", {}).get("vipType")
-        current_exp = ret.get("data", {}).get("level_info", {}).get("current_exp")
+        data = ret.get("data") or {}
+        uname = data.get("uname")
+        uid = data.get("mid")
+        is_login = data.get("isLogin")
+        coin = data.get("money")
+        vip_type = data.get("vipType")
+        current_exp = (data.get("level_info") or {}).get("current_exp")
         return uname, uid, is_login, coin, vip_type, current_exp
 
     @staticmethod
@@ -33,10 +35,11 @@ class BiliBili(CheckIn):
         """
         url = "https://api.bilibili.com/x/member/web/exp/log?jsonp=jsonp"
         today = time.strftime("%Y-%m-%d", time.localtime())
+        data = session.get(url=url).json().get("data") or {}
         return list(
             filter(
                 lambda x: x["time"].split()[0] == today,
-                session.get(url=url).json().get("data").get("list"),
+                data.get("list") or [],
             )
         )
 
@@ -52,10 +55,11 @@ class BiliBili(CheckIn):
         """取B站经验信息"""
         url = "https://api.bilibili.com/x/member/web/exp/log?jsonp=jsonp"
         today = time.strftime("%Y-%m-%d", time.localtime())
+        data = session.get(url=url).json().get("data") or {}
         return list(
             filter(
                 lambda x: x["time"].split()[0] == today,
-                session.get(url=url).json().get("data").get("list"),
+                data.get("list") or [],
             )
         )
 
@@ -197,6 +201,7 @@ class BiliBili(CheckIn):
         url = "https://api.bilibili.com/x/space/arc/search"
         ret = session.get(url=url, params=params).json()
         count = 2
+        vlist = ((ret.get("data") or {}).get("list") or {}).get("vlist") or []
         data_list = [
             {
                 "aid": one.get("aid"),
@@ -204,7 +209,7 @@ class BiliBili(CheckIn):
                 "title": one.get("title"),
                 "owner": one.get("author"),
             }
-            for one in ret.get("data", {}).get("list", {}).get("vlist", [])[:count]
+            for one in vlist[:count]
         ]
         return data_list, count
 
@@ -251,7 +256,7 @@ class BiliBili(CheckIn):
         """B站直播获取金银瓜子状态"""
         url = "https://api.live.bilibili.com/pay/v1/Exchange/getStatus"
         ret = session.get(url=url).json()
-        data = ret.get("data")
+        data = ret.get("data") or {}
         silver = data.get("silver", 0)
         gold = data.get("gold", 0)
         coin = data.get("coin", 0)
@@ -269,8 +274,14 @@ class BiliBili(CheckIn):
         rid int 分区号
         num int 获取视频数量
         """
-        url = "https://api.bilibili.com/x/web-interface/dynamic/region?ps=" + str(num) + "&rid=" + str(rid)
-        ret = session.get(url=url).json()
+        # 旧接口 /x/web-interface/dynamic/region 已下线（返回 code -404 data null），改用 newlist
+        url = "https://api.bilibili.com/x/web-interface/newlist?ps=" + str(num) + "&rid=" + str(rid)
+        try:
+            ret = session.get(url=url).json()
+            archives = (ret.get("data") or {}).get("archives") or []
+        except Exception as e:
+            print(f"获取分区视频失败: {e}")
+            archives = []
         data_list = [
             {
                 "aid": one.get("aid"),
@@ -278,7 +289,7 @@ class BiliBili(CheckIn):
                 "title": one.get("title"),
                 "owner": one.get("owner", {}).get("name"),
             }
-            for one in ret.get("data", {}).get("archives", [])
+            for one in archives
         ]
         return data_list
 
@@ -300,7 +311,7 @@ class BiliBili(CheckIn):
         requests.utils.add_dict_to_cookiejar(session.cookies, bilibili_cookie)
         session.headers.update(
             {
-                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.64",
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
                 "Referer": "https://www.bilibili.com/",
                 "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
                 "Connection": "keep-alive",
@@ -313,7 +324,7 @@ class BiliBili(CheckIn):
             live_msg = self.live_sign(session=session)
             aid_list = self.get_region(session=session)
             vip_privilege_my_ret = self.vip_privilege_my(session=session)
-            welfare_list = vip_privilege_my_ret.get("data", {}).get("list", [])
+            welfare_list = (vip_privilege_my_ret.get("data") or {}).get("list") or []
             for welfare in welfare_list:
                 if welfare.get("state") == 0 and welfare.get("vip_type") == vip_type:
                     vip_privilege_receive_ret = self.vip_privilege_receive(
@@ -335,7 +346,7 @@ class BiliBili(CheckIn):
             if coin_type == 1:
                 following_list = self.get_followings(session=session, uid=uid)
                 count = 0
-                for following in following_list.get("data", {}).get("list"):
+                for following in (following_list.get("data") or {}).get("list") or []:
                     mid = following.get("mid")
                     if mid:
                         tmplist, tmpcount = self.space_arc_search(session=session, uid=mid)
@@ -355,6 +366,8 @@ class BiliBili(CheckIn):
                         coin_num -= 1
                         print(f"成功给{aid.get('title')}投一个币")
                         success_count += 1
+                        if coin_num > 0:
+                            time.sleep(random.randint(2, 5))
                     elif ret["code"] == 34005:
                         print(f"投币{aid.get('title')}失败，原因为{ret['message']}")
                         continue
@@ -367,20 +380,24 @@ class BiliBili(CheckIn):
                 coin_msg = f"今日成功投币{success_count + coins_av_count}/{self.check_item.get('coin_num', 5)}个"
             else:
                 coin_msg = f"今日成功投币{coins_av_count}/{self.check_item.get('coin_num', 5)}个"
-            aid = aid_list[0].get("aid")
-            cid = aid_list[0].get("cid")
-            title = aid_list[0].get("title")
-            report_ret = self.report_task(session=session, bili_jct=bili_jct, aid=aid, cid=cid)
-            if report_ret.get("code") == 0:
-                report_msg = f"观看《{title}》300秒"
+            if not aid_list:
+                report_msg = "任务失败(无可用视频)"
+                share_msg = "任务失败(无可用视频)"
             else:
-                report_msg = "任务失败"
-            share_ret = self.share_task(session=session, bili_jct=bili_jct, aid=aid)
-            if share_ret.get("code") == 0:
-                share_msg = f"分享《{title}》成功"
-            else:
-                share_msg = "分享失败"
-                print(share_msg)
+                aid = aid_list[0].get("aid")
+                cid = aid_list[0].get("cid")
+                title = aid_list[0].get("title")
+                report_ret = self.report_task(session=session, bili_jct=bili_jct, aid=aid, cid=cid)
+                if report_ret.get("code") == 0:
+                    report_msg = f"观看《{title}》300秒"
+                else:
+                    report_msg = "任务失败"
+                share_ret = self.share_task(session=session, bili_jct=bili_jct, aid=aid)
+                if share_ret.get("code") == 0:
+                    share_msg = f"分享《{title}》成功"
+                else:
+                    share_msg = "分享失败"
+                    print(share_msg)
             s2c_msg = "不兑换硬币"
             if silver2coin:
                 silver2coin_ret = self.silver2coin(session=session, bili_jct=bili_jct)
@@ -408,6 +425,10 @@ class BiliBili(CheckIn):
                 *live_stats,
             ]
             msg = "\n".join([f"{one.get('name')}: {one.get('value')}" for one in msg])
+            return msg
+        else:
+            msg = "cookie 失效，请重新获取 BILIBILI cookie"
+            print(msg)
             return msg
 
 

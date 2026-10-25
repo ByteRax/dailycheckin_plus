@@ -63,9 +63,16 @@ class IMAOTAI(CheckIn):
         aes_iv = "2018534749963515"
         self.encrypt = Encrypt(key=aes_key, iv=aes_iv)
 
-        self.mt_version = json.loads(requests.get("https://itunes.apple.com/cn/lookup?id=1600482450").text)["results"][
-            0
-        ]["version"]
+        # itunes 接口偶发失败（issue#460），重试后回退已知可用版本号
+        self.mt_version = "1.3.7"
+        for _ in range(3):
+            try:
+                self.mt_version = json.loads(
+                    requests.get("https://itunes.apple.com/cn/lookup?id=1600482450", timeout=10).text
+                )["results"][0]["version"]
+                break
+            except Exception as e:
+                print(f"获取 mt_version 失败，重试: {e}")
         self.headers = {}
         self.header_context = """
 MT-Lat: 28.499562
@@ -288,6 +295,14 @@ userId: 2
             }
         return msg
 
+    @staticmethod
+    def mask_mobile(mobile) -> str:
+        """推送消息中脱敏手机号, 保留前 3 后 4。"""
+        mobile = str(mobile or "")
+        if len(mobile) > 7:
+            return f"{mobile[:3]}****{mobile[-4:]}"
+        return mobile
+
     def main(self):
         msg = []
         mobile = self.check_item.get("mobile")
@@ -302,7 +317,7 @@ userId: 2
         msg = [
             {
                 "name": "手机号",
-                "value": f"{mobile}",
+                "value": self.mask_mobile(mobile),
             },
             {
                 "name": "省份城市",

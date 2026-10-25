@@ -4,6 +4,7 @@ import hmac
 import json
 import re
 import time
+from typing import Optional
 from urllib.parse import quote_plus
 
 import requests
@@ -12,7 +13,8 @@ import requests
 def message2server(sckey, content):
     print("server 酱推送开始")
     data = {"text": "每日签到", "desp": content.replace("\n", "\n\n")}
-    requests.post(url=f"https://sc.ftqq.com/{sckey}.send", data=data)
+    # sc.ftqq.com 域名已退役（issue#431），统一走 sctapi.ftqq.com
+    requests.post(url=f"https://sctapi.ftqq.com/{sckey}.send", data=data)
 
 
 def message2server_turbo(sendkey, content):
@@ -44,13 +46,18 @@ def message2coolpush(
         requests.post(url=f"https://push.xuthus.cc/email/{coolpushskey}", params=params)
 
 
-def message2qmsg(qmsg_key, qmsg_type, content):
+def message2qmsg(qmsg_key, qmsg_type, content, qmsg_url=None, qmsg_qq=None):
     print("qmsg 酱推送开始")
+    base_url = qmsg_url or "https://qmsg.zendee.cn"
+    if base_url.endswith("/"):
+        base_url = base_url[:-1]
     params = {"msg": content}
+    if qmsg_qq:
+        params["qq"] = qmsg_qq
     if qmsg_type == "group":
-        requests.get(url=f"https://qmsg.zendee.cn/group/{qmsg_key}", params=params)
+        requests.get(url=f"{base_url}/group/{qmsg_key}", params=params, timeout=15)
     else:
-        requests.get(url=f"https://qmsg.zendee.cn/send/{qmsg_key}", params=params)
+        requests.get(url=f"{base_url}/send/{qmsg_key}", params=params, timeout=15)
 
 
 def message2telegram(tg_api_host, tg_proxy, tg_bot_token, tg_user_id, content):
@@ -74,10 +81,17 @@ def message2telegram(tg_api_host, tg_proxy, tg_bot_token, tg_user_id, content):
     requests.post(url=url, data=send_data, proxies=proxies)
 
 
-def message2feishu(fskey, content):
+def message2feishu(fskey, content, fssecret=None):
     print("飞书 推送开始")
     data = {"msg_type": "text", "content": {"text": content}}
-    requests.post(url=f"https://open.feishu.cn/open-apis/bot/v2/hook/{fskey}", json=data)
+    if fssecret:
+        timestamp = str(round(time.time()))
+        string_to_sign = f"{timestamp}\n{fssecret}"
+        hmac_code = hmac.new(string_to_sign.encode("utf-8"), digestmod=hashlib.sha256).digest()
+        sign = base64.b64encode(hmac_code).decode("utf-8")
+        data["timestamp"] = timestamp
+        data["sign"] = sign
+    requests.post(url=f"https://open.feishu.cn/open-apis/bot/v2/hook/{fskey}", json=data, timeout=15)
 
 
 def message2dingtalk(dingtalk_secret, dingtalk_access_token, content):
@@ -96,14 +110,39 @@ def message2dingtalk(dingtalk_secret, dingtalk_access_token, content):
     )
 
 
-def message2bark(bark_url: str, content):
+def message2bark(
+    bark_url: str,
+    content,
+    title: Optional[str] = None,
+    sound: Optional[str] = None,
+    group: Optional[str] = None,
+    icon: Optional[str] = None,
+    url_jump: Optional[str] = None,
+):
     print("Bark 推送开始")
     if not bark_url.endswith("/"):
         bark_url += "/"
-    content = quote_plus(content)
-    url = f"{bark_url}{content}"
-    headers = {"Content-type": "application/x-www-form-urlencoded"}
-    requests.get(url=url, headers=headers)
+    params = {"sound": sound, "group": group, "icon": icon, "url": url_jump}
+    query = "".join(f"{key}={quote_plus(value)}&" for key, value in params.items() if value)
+    # Bark 单次请求 URL 过长会失败(414/431)，超长内容分批发送（PR320 重实现，仅在 Bark 通道内分片）。
+    # 按原始字符分片，每片独立做 URL 编码，避免把 %XX 转义序列切半导致 bark-server 解码 400。
+    max_chunk_chars = 600
+    raw_chunks = [content[i : i + max_chunk_chars] for i in range(0, len(content), max_chunk_chars)] or [""]
+    total = len(raw_chunks)
+    for index, raw_chunk in enumerate(raw_chunks, start=1):
+        chunk_content = quote_plus(raw_chunk)
+        if total > 1:
+            chunk_content = f"{quote_plus(f'({index}/{total})')}%20{chunk_content}"
+        if title:
+            url = f"{bark_url}{quote_plus(title)}/{chunk_content}?{query}"
+        else:
+            url = f"{bark_url}{chunk_content}?{query}"
+        if url.endswith("?"):
+            url = url[:-1]
+        headers = {"Content-type": "application/x-www-form-urlencoded"}
+        requests.get(url=url, headers=headers)
+        if total > 1 and index < total:
+            time.sleep(1)
 
 
 def message2qywxrobot(qywx_key, content):
@@ -147,6 +186,19 @@ def message2qywxapp(
                 ]
             },
         }
+    # textcard 描述上限 512 字节（UTF-8），超长内容改用 text 消息（issue#423）；
+    # text 消息本身上限 2048 字节，超出部分截断并附加提示
+    elif len(content.encode("utf-8")) > 512:
+        text_content = content
+        if len(text_content.encode("utf-8")) > 2048:
+            text_content = text_content.encode("utf-8")[:2000].decode("utf-8", errors="ignore")
+            text_content += "\n...(内容过长已截断)"
+        data = {
+            "touser": qywx_touser,
+            "agentid": int(qywx_agentid),
+            "msgtype": "text",
+            "text": {"content": text_content},
+        }
     else:
         data = {
             "touser": qywx_touser,
@@ -176,6 +228,75 @@ def message2pushplus(pushplus_token, content, pushplus_topic=None):
     if pushplus_topic:
         data["topic"] = pushplus_topic
     requests.post(url="http://www.pushplus.plus/send", data=json.dumps(data))
+
+
+def message2wpush(wpush_apikey, content, wpush_channel=None, wpush_topic_code=None):
+    print("WPUSH 推送开始")
+    data = {
+        "apikey": wpush_apikey,
+        "title": "签到通知",
+        "content": content,
+        "channel": wpush_channel or "wechat",
+    }
+    if wpush_topic_code:
+        data["topic_code"] = wpush_topic_code
+    response = requests.post(
+        url="https://api.wpush.cn/api/v1/send",
+        json=data,
+        headers={"Content-Type": "application/json"},
+        timeout=15,
+        allow_redirects=False,
+    )
+    try:
+        result = response.json()
+    except Exception:
+        print("WPUSH 推送失败！响应解析失败")
+        return
+    # 仅 JSON code === 0 视为成功；HTTP 2xx 不能单独作为成功依据
+    if isinstance(result.get("code"), int) and not isinstance(result.get("code"), bool) and result.get("code") == 0:
+        print("WPUSH 推送成功！")
+    else:
+        print(f"WPUSH 推送失败！错误信息：{result.get('message') or result}")
+
+
+def message2xxtui(xxtui_key, content):
+    print("xxtui 推送开始")
+    data = {"from": "DailyCheckIn 每日签到脚本", "title": "每日签到", "content": content}
+    response = requests.post(url=f"https://www.xxtui.com/xxtui/{xxtui_key}", json=data, timeout=15)
+    result = {}
+    try:
+        result = response.json()
+    except Exception:
+        pass
+    if response.status_code == 200 and (result.get("code") in (200, 0) or result.get("success") is True):
+        print("xxtui 推送成功！")
+    else:
+        print(f"xxtui 推送失败！状态码：{response.status_code}，信息：{result or response.text[:200]}")
+
+
+def message2wxpusher(wxpusher_tk, wxpusher_uid, content):
+    print("WXPUSHER 推送开始")
+    url = "https://wxpusher.zjiecode.com/api/send/message"
+    html_content = f"<h4>每日签到</h4><br/><p>{content.replace(chr(10), '<br/>')}</p>"
+    data = {
+        "appToken": wxpusher_tk,
+        "content": html_content,
+        "summary": "dailycheckin 每日签到",
+        "contentType": 2,
+        "uids": [wxpusher_uid],
+        "verifyPayType": 0,
+    }
+    response = requests.post(url=url, headers={"Content-Type": "application/json"}, json=data, timeout=15)
+    try:
+        result = response.json()
+    except Exception:
+        print("WXPUSHER 推送失败！响应解析失败")
+        return
+    # WXPusher 成功码为 1000
+    if result.get("code") == 1000:
+        print("WXPUSHER 推送成功！")
+    else:
+        print(f"WXPUSHER 推送失败！信息：{result.get('msg') or result}")
 
 
 def message2gotify(gotify_url: str, gotify_token: str, gotify_priority: str, content: str) -> None:
@@ -238,11 +359,19 @@ def push_message(content_list: list, notice_info: dict):
     dingtalk_secret = notice_info.get("dingtalk_secret")
     dingtalk_access_token = notice_info.get("dingtalk_access_token")
     fskey = notice_info.get("fskey")
+    fssecret = notice_info.get("fssecret")
     bark_url = notice_info.get("bark_url")
+    bark_title = notice_info.get("bark_title")
+    bark_group = notice_info.get("bark_group")
+    bark_icon = notice_info.get("bark_icon")
+    bark_sound = notice_info.get("bark_sound")
+    bark_url_jump = notice_info.get("bark_url_jump")
     sckey = notice_info.get("sckey")
     sendkey = notice_info.get("sendkey")
     qmsg_key = notice_info.get("qmsg_key")
     qmsg_type = notice_info.get("qmsg_type")
+    qmsg_url = notice_info.get("qmsg_url")
+    qmsg_qq = notice_info.get("qmsg_qq")
     tg_bot_token = notice_info.get("tg_bot_token")
     tg_user_id = notice_info.get("tg_user_id")
     tg_api_host = notice_info.get("tg_api_host")
@@ -266,6 +395,12 @@ def push_message(content_list: list, notice_info: dict):
     ntfy_url = notice_info.get("ntfy_url")
     ntfy_topic = notice_info.get("ntfy_topic")
     ntfy_priority = notice_info.get("ntfy_priority")
+    wpush_apikey = notice_info.get("wpush_apikey")
+    wpush_channel = notice_info.get("wpush_channel")
+    wpush_topic_code = notice_info.get("wpush_topic_code")
+    xxtui_key = notice_info.get("xxtui_key")
+    wxpusher_tk = notice_info.get("wxpusher_tk")
+    wxpusher_uid = notice_info.get("wxpusher_uid")
     content_str = "\n————————————\n\n".join(content_list)
     merge_push = notice_info.get("merge_push")
     message_list = [content_str]
@@ -285,6 +420,9 @@ def push_message(content_list: list, notice_info: dict):
             or qywx_agentid
             or bark_url
             or pushplus_token
+            or wpush_apikey
+            or xxtui_key
+            or (wxpusher_tk and wxpusher_uid)
             or ntfy_topic
             or (gotify_url and gotify_token)
         ):
@@ -296,7 +434,9 @@ def push_message(content_list: list, notice_info: dict):
     for message in message_list:
         if qmsg_key:
             try:
-                message2qmsg(qmsg_key=qmsg_key, qmsg_type=qmsg_type, content=message)
+                message2qmsg(
+                    qmsg_key=qmsg_key, qmsg_type=qmsg_type, content=message, qmsg_url=qmsg_url, qmsg_qq=qmsg_qq
+                )
             except Exception as e:
                 print("qmsg 推送失败", e)
         if coolpushskey:
@@ -325,7 +465,15 @@ def push_message(content_list: list, notice_info: dict):
                 print("企业微信应用消息推送失败", e)
         if bark_url:
             try:
-                message2bark(bark_url=bark_url, content=message)
+                message2bark(
+                    bark_url=bark_url,
+                    content=message,
+                    title=bark_title,
+                    group=bark_group,
+                    icon=bark_icon,
+                    sound=bark_sound,
+                    url_jump=bark_url_jump,
+                )
             except Exception as e:
                 print("Bark 推送失败", e)
         if dingtalk_access_token and dingtalk_secret:
@@ -339,7 +487,7 @@ def push_message(content_list: list, notice_info: dict):
                 print("钉钉推送失败", e)
         if fskey:
             try:
-                message2feishu(fskey=fskey, content=message)
+                message2feishu(fskey=fskey, content=message, fssecret=fssecret)
             except Exception as e:
                 print("飞书推送失败", e)
         if sckey:
@@ -397,6 +545,26 @@ def push_message(content_list: list, notice_info: dict):
                 )
             except Exception as e:
                 print("Ntfy 推送失败", e)
+        if wpush_apikey:
+            try:
+                message2wpush(
+                    wpush_apikey=wpush_apikey,
+                    content=message,
+                    wpush_channel=wpush_channel,
+                    wpush_topic_code=wpush_topic_code,
+                )
+            except Exception as e:
+                print("WPUSH 推送失败", e)
+        if xxtui_key:
+            try:
+                message2xxtui(xxtui_key=xxtui_key, content=message)
+            except Exception as e:
+                print("Xxtui 推送失败", e)
+        if wxpusher_tk and wxpusher_uid:
+            try:
+                message2wxpusher(wxpusher_tk=wxpusher_tk, wxpusher_uid=wxpusher_uid, content=message)
+            except Exception as e:
+                print("WXPUSHER 推送失败", e)
 
 
 if __name__ == "__main__":

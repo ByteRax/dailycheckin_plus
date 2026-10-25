@@ -1,0 +1,21 @@
+# New API 站（AnyRouter）
+
+[New API](https://github.com/QuantumNous/new-api) 系站点（如 [AnyRouter](https://anyrouter.top/)）的每日签到，签到可获得额度奖励。
+
+### 配置示例
+
+```json filename="config.json" copy
+{
+  "ANYROUTER": [
+    {
+      "cookies": "在浏览器登录后复制的 Cookie 请求头",
+      "user_id": "个人中心 URL 中的数字 ID"
+    }
+  ]
+}
+```
+
+|           参数           |                                     说明                                     |
+| :----------------------: | :--------------------------------------------------------------------------: |
+| _**ANYROUTER**_.cookies  | 登录站点后复制的 `Cookie` 请求头（也支持 `cookie` 键名或字典形式） |
+|  _**ANYROUTER**_.user_id |        个人控制台 URL 中的数字用户 ID（也支持 `api_user` 键名）        |

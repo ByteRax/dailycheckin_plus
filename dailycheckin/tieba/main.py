@@ -16,7 +16,7 @@ class Tieba(CheckIn):
     def __init__(self, check_item: dict):
         self.TBS_URL = "http://tieba.baidu.com/dc/common/tbs"
         self.LIKE_URL = "http://c.tieba.baidu.com/c/f/forum/like"
-        self.SIGN_URL = "http://c.tieba.baidu.com/c/c/forum/sign"
+        self.SIGN_URL = "https://tiebac.baidu.com/c/c/forum/sign"
         self.LOGIN_INFO_URL = "https://zhidao.baidu.com/api/loginInfo"
         self.SIGN_KEY = "tiebaclient!!!"
 
