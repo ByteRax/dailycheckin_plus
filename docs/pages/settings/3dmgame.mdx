@@ -1,0 +1,50 @@
+import { Callout, Steps } from 'nextra/components'
+import CardList from '../../components/CardList'
+
+<CardList />
+
+# 3DMGAME 论坛
+
+<Callout type="warning">
+运行此模块会执行论坛任务，可能以当前账号公开自动回帖；请确认了解并接受后再配置。
+</Callout>
+
+### 配置示例
+
+```json filename="config.json" copy
+{
+  "THREEDMGAME": [
+    {
+      "cookie": "3DMGAME 论坛登录后的 Cookie"
+    }
+  ]
+}
+```
+
+也可在青龙中设置环境变量 `bbs3dmck`，多账号使用 `@`、`&` 或换行分隔；仅在 `THREEDMGAME` 未配置时使用该变量。如果 Cookie 自身包含 `@` 或 `&`，请改用上面的 JSON 配置以免被拆分。
+
+多个账号可在数组中分别添加配置对象。Cookie 是登录凭证，请勿公开或提交到仓库；包含双引号等特殊字符时需按 JSON 规则转义。
+
+### 配置说明
+
+| 参数 | 说明 |
+| :--- | :--- |
+| `THREEDMGAME[].cookie` | 3DMGAME 论坛账号登录后的完整 Cookie 请求头 |
+
+## 获取方式
+
+<Steps>
+
+### 登录论坛
+
+打开 [3DMGAME 论坛](https://bbs.3dmgame.com/) 并登录账号。
+
+### 打开开发者工具
+
+打开浏览器开发者工具，选择 Network（网络）并刷新页面。
+
+### 复制 Cookie
+
+选择发往论坛的页面请求，在请求头中复制 `Cookie` 的值，填入配置。
+
+</Steps>

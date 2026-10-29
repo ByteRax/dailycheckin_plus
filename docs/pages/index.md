@@ -62,8 +62,10 @@
 | 🟢️  | V2EX      | [V2EX](https://www.v2ex.com/)                              | 25.09.28 | 铜币奖励                                                                     |
 | 🟢️  | ACFUN     | [AcFun](https://www.acfun.cn/)                             | 25.09.28 | 每日签到香蕉                                                                 |
 | 🟢️  | IQIYI     | [爱奇艺](https://www.iqiyi.com/)                           | 25.09.28 | ① VIP7 每月免费领白金会员；② 抽白金会员 5 次；③ 摇一摇抽奖 3 次；④ 抽奖 3 次 |
-| 🟢️  | SMZDM     | [什么值得买](https://www.smzdm.com/)                       | 24.02.20 | 签到和抽奖                                                                   |
 | 🟢️  | ALIYUN    | [阿里云盘](https://www.aliyundrive.com/drive/)             | 24.02.20 | 签到获取免费会员和空间                                                       |
+| 🟡 | POJIE52 | [吾爱破解](https://www.52pojie.cn/) | — | 论坛签到 |
+| 🟡 | WPS | [WPS](https://www.wps.cn/) | — | 任务中心和天天领福利：自动签到、试用、抽奖及领奖，存在账号和权益风险 |
+| 🟡 | DIDI | 滴滴 | — | 抽奖、领券及接任务；可能消耗机会或领取权益，不含行程意外险 |
 | 🟢️  | ENSHAN    | [恩山无线论坛](https://www.right.com.cn/forum/)            | 24.02.20 | 签到获取硬币和积分                                                           |
 | 🟢️  | FNNASCLUB | [飞牛 Nas](https://club.fnnas.com/)                        | 25.12.09 | 签到奖励                                                                     |
 | 🟢️  | AOLAXING  | [奥拉星](http://www.100bt.com/m/creditMall/?gameId=2#task) | 24.02.20 | 签到获取积分                                                                 |

@@ -1,0 +1,37 @@
+import { Callout } from 'nextra/components'
+import CardList from '../../components/CardList'
+
+<CardList />
+
+# 滴滴
+
+<Callout type="warning">
+运行后会尝试抽奖、领券和接任务，可能消耗抽奖机会、领取或改变账号权益，也可能产生任务记录或触发风控。实际活动及结果以滴滴规则为准，请确认接受这些真实操作后再配置。本集成不包含行程意外险任务。
+</Callout>
+
+## 配置示例
+
+```json filename="config.json" copy
+{
+  "DIDI": [
+    { "token": "滴滴账号 Token" },
+    { "token": "另一个账号 Token", "account_name": "备用账号" }
+  ]
+}
+```
+
+`token` 为必填登录凭证，`account_name` 为可选的账号备注。多个账号分别放在 `DIDI` 数组中。默认使用成都坐标；已有的 `dd_*` 选项应予保留，具体可用选项以集成实现为准。
+
+## 青龙环境变量
+
+可以设置 `DD_TOKENS`，使用 `&` 分隔多个账号；每个账号可以用 `备注#token` 指定备注，也可以只填写 token：
+
+```text
+账号一#token一&token二
+```
+
+配置文件中的 `DIDI` 优先于 `DD_TOKENS`。请将示例替换为自己的凭证；若凭证或备注包含分隔符，建议使用 JSON 配置，避免被误拆分。
+
+## 隐私与安全
+
+Token 是敏感登录凭证，请勿公开、提交仓库或分享未脱敏的日志和截图。运行过程中可能向滴滴提交账号、设备及位置信息；默认坐标是成都，并不代表设备真实位置。请仅使用自己的账号，并在了解活动规则和隐私影响后运行。

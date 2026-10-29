@@ -64,6 +64,7 @@ setup(
     packages=find_packages(exclude=("config",)),
     install_requires=REQUIRED,
     include_package_data=True,
+    package_data={"dailycheckin.wps": ["UPSTREAM_LICENSE.txt"]},
     license="MIT",
     zip_safe=False,
     entry_points={"console_scripts": ["dailycheckin = dailycheckin.main:checkin"]},

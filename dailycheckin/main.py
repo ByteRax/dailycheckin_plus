@@ -100,6 +100,25 @@ def save_config(config_path, data) -> bool:
         return False
 
 
+def redact_account_secrets(text, account):
+    """避免账号配置中的凭证出现在新增的日志和通知摘要中。"""
+    text = str(text)
+    if not isinstance(account, dict):
+        return text
+    for key, value in account.items():
+        if not isinstance(value, str) or not any(
+            word in key.lower() for word in ("cookie", "token", "password", "secret", "authorization")
+        ):
+            continue
+        secrets = [value]
+        if "cookie" in key.lower():
+            secrets.extend(part.split("=", 1)[1].strip() for part in value.split(";") if "=" in part)
+        for secret in secrets:
+            if len(secret) >= 4:
+                text = text.replace(secret, "[已隐藏]")
+    return text
+
+
 def checkin():
     start_time = time.time()
     utc_time = (datetime.utcnow() + timedelta(hours=8)).strftime("%Y-%m-%d %H:%M:%S")
@@ -141,13 +160,21 @@ def checkin():
                     check_item_before = json.dumps(check_item, ensure_ascii=False, sort_keys=True)
                 except Exception:
                     check_item_before = None
+                service = None
                 try:
-                    msg = check_func(check_item).main()
-                    content_list.append(f"「{check_name}」\n{msg}")
-                    print(f"第 {index + 1} 个账号: ✅✅✅✅✅")
+                    service = check_func(check_item)
+                    msg = redact_account_secrets(service.main(), check_item)
+                    outcome = getattr(service, "outcome", None)
+                    labels = {"success": "✅成功", "partial": "⚠️部分失败", "failed": "❌失败"}
+                    label = labels.get(outcome, "已完成（未判定业务结果）")
+                    content_list.append(f"「{check_name}」\n{label}\n{msg}")
+                    print(f"第 {index + 1} 个账号: {label}\n执行摘要:\n{msg}")
                 except Exception as e:
-                    content_list.append(f"「{check_name}」\n{e}")
-                    print(f"第 {index + 1} 个账号: ❌❌❌❌❌\n{e}")
+                    previous = getattr(service, "messages", []) if service else []
+                    details = "\n".join(str(line) for line in previous) if isinstance(previous, list) else ""
+                    msg = redact_account_secrets(f"{details}\n{e}".strip(), check_item)
+                    content_list.append(f"「{check_name}」\n❌失败\n{msg}")
+                    print(f"第 {index + 1} 个账号: ❌失败\n执行摘要:\n{msg}")
                 finally:
                     try:
                         check_item_after = json.dumps(check_item, ensure_ascii=False, sort_keys=True)

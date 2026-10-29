@@ -1,0 +1,47 @@
+import { Steps } from 'nextra/components'
+import CardList from '../../components/CardList'
+
+<CardList />
+
+# 吾爱破解
+
+### 配置示例
+
+```json filename="config.json" copy
+{
+  "POJIE52": [
+    {
+      "cookie": "吾爱破解论坛登录后的 Cookie"
+    }
+  ]
+}
+```
+
+多个账号可在数组中分别添加配置对象。配置文件优先；未配置 `POJIE52` 时，也可使用青龙环境变量 `POJIE52_COOKIE`。多账号推荐换行分隔，也兼容 `&` 或 `#` 分隔。如果 Cookie 本身包含分隔符，请使用 JSON 配置，避免被错误拆分。
+
+Cookie 是登录凭证，请勿公开或提交到仓库；包含双引号等特殊字符时需按 JSON 规则转义。
+
+### 配置说明
+
+| 参数 | 说明 |
+| :--- | :--- |
+| `POJIE52[].cookie` | 吾爱破解账号登录后的完整 Cookie 请求头 |
+| `POJIE52_COOKIE` | 青龙环境变量，用于提供一个或多个账号的 Cookie |
+
+## 获取方式
+
+<Steps>
+
+### 登录论坛
+
+打开 [吾爱破解](https://www.52pojie.cn/) 并登录账号。
+
+### 打开开发者工具
+
+打开浏览器开发者工具，选择 Network（网络）并刷新页面。
+
+### 复制 Cookie
+
+选择发往论坛的页面请求，在请求头中复制 `Cookie` 的值，填入配置。
+
+</Steps>

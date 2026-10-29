@@ -1,0 +1,75 @@
+import { Callout, Steps } from 'nextra/components'
+import CardList from '../../components/CardList'
+
+<CardList />
+
+# WPS
+
+<Callout type="warning">
+配置后运行会自动执行任务中心和天天领福利活动，包括申请会员免费试用、抽奖和符合条件时领奖。操作可能消耗抽奖机会或领取权益，也可能触发风控、违反活动规则或影响账号；活动内容和结果以 WPS 实际规则为准，请确认接受风险后再配置。
+</Callout>
+
+### 配置示例
+
+```json filename="config.json" copy
+{
+  "WPS": [
+    {
+      "user_id": 123456789,
+      "cookies": "登录后复制的 Cookie 请求头",
+      "account_name": "WPS 账号",
+      "user_agent": "浏览器 User-Agent",
+      "max_lottery_limit": 5
+    }
+  ]
+}
+```
+
+多个账号可在 `WPS` 数组中分别添加配置对象。`account_name`、`user_agent` 和 `max_lottery_limit` 均可省略。
+
+| 参数 | 说明 |
+| :--- | :--- |
+| `user_id` | 必填，WPS 用户数字 ID，以 JSON 数字填写 |
+| `cookies` | 必填，登录后的完整 Cookie 请求头 |
+| `account_name` | 可选，账号显示名称 |
+| `user_agent` | 可选，浏览器 User-Agent；不填时使用源码默认值 |
+| `max_lottery_limit` | 可选，任务中心每次运行的抽奖次数上限，源码默认 5；天天领福利抽奖不受此限制 |
+
+任务中心会尝试签到和抽奖；天天领福利会根据活动状态尝试签到、申请会员免费试用、抽奖，以及在满足第 7 天条件时领取奖励。实际能否执行或领取取决于账号和活动状态，不保证成功。登录态失效时需重新获取凭证。
+
+## 青龙环境变量
+
+在青龙环境变量中新建 `WPS`（也支持小写 `wps`），变量值填写完整 JSON，例如：
+
+```json
+{
+  "wps": {
+    "accounts": [
+      {
+        "account_name": "大号",
+        "user_id": 123456789,
+        "cookies": "你的完整 Cookie",
+        "user_agent": "浏览器 User-Agent"
+      }
+    ]
+  }
+}
+```
+
+也支持直接填写 `{"accounts": [...]}` 或账号数组；多个账号放在 `accounts` 数组中。如果 `config.json` 中的 `WPS` 账号列表非空，优先使用配置文件；否则使用环境变量。`WPS` 和 `wps` 同时存在时，优先使用大写 `WPS`。环境变量保存的是凭证，请勿公开。配置启用后会按现有定时计划执行，并可能消耗抽奖次数、申请试用和领取奖励。
+
+## 获取配置
+
+<Steps>
+
+### 登录 WPS
+
+在浏览器中登录 WPS，打开对应活动页面。
+
+### 获取 Cookie 和用户 ID
+
+打开浏览器开发者工具的 Network（网络）面板，刷新活动页面。从请求头复制 `Cookie`，并从登录后的账号信息或相关请求中查找自己的数字 `user_id`。如需自定义 `user_agent`，可复制同一浏览器请求头中的 `User-Agent`。
+
+</Steps>
+
+Cookie 是登录凭证，请勿公开或提交到仓库；包含双引号等特殊字符时需按 JSON 规则转义。示例中的用户 ID 和 Cookie 均需替换为自己的实际值。

@@ -1,4 +1,4 @@
-"""Regression tests for batch-1 fixes: bilibili / enshan / tieba / smzdm.
+"""Regression tests for batch-1 fixes: bilibili / enshan / tieba.
 
 All HTTP is mocked; no real network access; cookies are fake credentials.
 Run: python -m unittest discover -s tests -v
@@ -13,7 +13,6 @@ import requests
 import dailycheckin.bilibili.main as bili_mod
 from dailycheckin.bilibili.main import BiliBili
 from dailycheckin.enshan.main import EnShan
-from dailycheckin.smzdm.main import SMZDM
 from dailycheckin.tieba.main import Tieba
 
 
@@ -134,39 +133,6 @@ class TestTieba(unittest.TestCase):
     def test_sign_url_uses_new_domain(self):
         t = Tieba(check_item={"cookie": "BDUSS=fakebduss"})
         self.assertTrue(t.SIGN_URL.startswith("https://tiebac.baidu.com/"))
-
-
-class TestSmzdm(unittest.TestCase):
-    def test_robot_token_raises_with_error_msg(self):
-        s = SMZDM(check_item={})
-        with patch(
-            "dailycheckin.smzdm.main.requests.post",
-            return_value=FakeResponse({"error_code": 0, "error_msg": "验证码"}),
-        ):
-            with self.assertRaises(RuntimeError) as ctx:
-                s.robot_token(headers={})
-        self.assertIn("验证码", str(ctx.exception))
-
-    def test_all_reward_tolerates_null_data(self):
-        s = SMZDM(check_item={})
-        with patch(
-            "dailycheckin.smzdm.main.requests.post",
-            return_value=FakeResponse({"error_code": 1, "error_msg": "reward_add", "data": None}),
-        ):
-            msgs = s.all_reward(headers={}, data={})
-        self.assertEqual(len(msgs), 1)
-        self.assertIn("获取失败", msgs[0]["value"])
-
-    def test_all_reward_parses_normal(self):
-        s = SMZDM(check_item={})
-        payload = {
-            "error_code": 0,
-            "data": {"normal_reward": {"reward_add": {"content": "+5金币"}, "sub_title": "已连签3天"}},
-        }
-        with patch("dailycheckin.smzdm.main.requests.post", return_value=FakeResponse(payload)):
-            msgs = s.all_reward(headers={}, data={})
-        self.assertEqual(msgs[0]["value"], "+5金币")
-        self.assertEqual(msgs[1]["value"], "已连签3天")
 
 
 if __name__ == "__main__":

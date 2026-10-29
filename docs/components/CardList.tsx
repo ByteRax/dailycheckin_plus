@@ -25,9 +25,11 @@ const defaultCards: CardItem[] = [
   { title: '爱奇艺', href: '/settings/iqiyi' },
   { title: '全民 K 歌', href: '/settings/kgqq' },
   { title: '小米运动', href: '/settings/mimotion' },
-  { title: '什么值得买', href: '/settings/smzdm' },
   { title: '百度贴吧', href: '/settings/tieba' },
   { title: 'V2EX', href: '/settings/v2ex' },
+  { title: '吾爱破解', href: '/settings/pojie52' },
+  { title: 'WPS', href: '/settings/wps' },
+  { title: '滴滴', href: '/settings/didi' },
   { title: '有道云笔记', href: '/settings/youdao' },
 ]
 
